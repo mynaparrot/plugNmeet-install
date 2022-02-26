@@ -1,0 +1,22 @@
+port: 7880
+rtc:
+  port_range_start: 50000
+  port_range_end: 60000
+  tcp_port: 7881
+  use_external_ip: true
+redis:
+  address: host.docker.internal:6379
+room:
+  auto_create: false
+keys:
+  LIVEKIT_API_KEY: LIVEKIT_SECRET
+webhook:
+  api_key: LIVEKIT_API_KEY
+  urls:
+    - "http://host.docker.internal:8080/webhook"
+turn:
+  enabled: true
+  udp_port: 3478
+  tls_port: 5349
+  external_tls: true
+  domain: TURN_SERVER_DOMAIN

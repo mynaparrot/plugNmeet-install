@@ -1,0 +1,4 @@
+.DS_Store
+!install-files/config.yaml
+!docker-compose.yaml
+!livekit.yaml

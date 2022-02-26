@@ -1,0 +1,17 @@
+[Unit]
+Description=plugNmeet recorder websocket
+Requires=plugnmeet-recorder.service
+BindsTo=plugnmeet-recorder.service
+
+[Service]
+Type=idle
+WorkingDirectory=/opt/plugNmeet/recorder
+ExecStart=/usr/bin/node /opt/plugNmeet/recorder/dist/websocketServer.js
+StandardOutput=syslog
+StandardError=syslog
+TimeoutStartSec=10
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=plugnmeet-recorder.service

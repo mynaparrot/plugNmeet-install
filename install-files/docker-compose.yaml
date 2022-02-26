@@ -1,0 +1,61 @@
+version: "3"
+
+networks:
+  plgnmeet:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+services:
+  redis:
+    image: redis
+    restart: on-failure
+    ports:
+      - "6379:6379/tcp"
+    networks:
+      plgnmeet:
+        ipv4_address: 172.20.0.5
+  db:
+    image: mariadb:10.6
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+      - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
+    networks:
+      plgnmeet:
+        ipv4_address: 172.20.0.6
+  livekit:
+    image: livekit/livekit-server
+    restart: on-failure
+    ports:
+      - "7880:7880/tcp"
+      - "7881:7881/tcp"
+      - "5349:5349/tcp"
+      - "3478:3478/udp"
+      - "50000:60000/udp"
+    volumes:
+      - .:/app
+    command: --config "/app/livekit.yaml"
+    network_mode: "host"
+    depends_on:
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  plugnmeet-api:
+    image: mynaparrot/plugnmeet-server
+    restart: on-failure
+    ports:
+      - "8080:8080/tcp"
+    volumes:
+      - .:/app
+    command: --config "/app/config.yaml"
+    depends_on:
+      - db
+      - redis
+      - livekit
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      plgnmeet:
+        ipv4_address: 172.20.0.8
