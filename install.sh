@@ -68,6 +68,9 @@ main() {
   systemctl restart plugnmeet
   
   if [ "$RECORDER_INSTALL" == "y" ]; then
+    # need redis server to up before start recorder service
+    echo ".............."
+    sleep 5
     systemctl start plugnmeet-recorder
   fi
 
