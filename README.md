@@ -39,7 +39,7 @@ generate a Let's Encrypt SSL certificate.
 Using SSH, connect to your Ubuntu server. Download and run the installation script as the root user.
 
 ```
-wget https://raw.githubusercontent.com/mynaparrot/plugNmeet-dev/main/install.sh
+wget https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh
 sudo bash install.sh
 ```
 
