@@ -263,7 +263,7 @@ enable_ufw() {
   ufw allow 80/tcp
   ufw allow 443/tcp
   ufw allow 7881/tcp
-  ufw allow 3478/udp
+  ufw allow 443/udp
   ufw allow 50000:60000/udp
   ufw allow from 172.20.0.0/24 # plugNmeet docker container
 
