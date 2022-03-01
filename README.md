@@ -49,7 +49,7 @@ sudo bash install.sh
 
 OR
 
-wget -qO- https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh | sudo bash
+sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh)" root
 ```
 
 Now, follow the steps in terminal. It will ask you to enter information when necessary. You'll receive the relevant
