@@ -1,61 +1,45 @@
 version: "3"
-
-networks:
-  plgnmeet:
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
 services:
   redis:
     image: redis
     restart: on-failure
-    ports:
-      - "6379:6379/tcp"
-    networks:
-      plgnmeet:
-        ipv4_address: 172.20.0.5
+    network_mode: "host"
   db:
     image: mariadb:10.6
     restart: on-failure
     environment:
       MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
+    network_mode: "host"
     volumes:
       - ./mariadb-data:/var/lib/mysql
       - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
-    networks:
-      plgnmeet:
-        ipv4_address: 172.20.0.6
+  caddy:
+    image: livekit/caddyl4
+    command: run --config /etc/caddy.yaml --adapter yaml
+    restart: on-failure
+    network_mode: "host"
+    volumes:
+      - ./caddy.yaml:/etc/caddy.yaml
+      - ./caddy_data:/data
   livekit:
     image: livekit/livekit-server
     restart: on-failure
-    ports:
-      - "7880:7880/tcp"
-      - "7881:7881/tcp"
-      - "5349:5349/tcp"
-      - "443:443/udp"
-      - "50000:60000/udp"
+    network_mode: "host"
     volumes:
       - .:/app
     command: --config "/app/livekit.yaml"
-    network_mode: "host"
     depends_on:
       - redis
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - caddy
   plugnmeet-api:
     image: mynaparrot/plugnmeet-server
     restart: on-failure
-    ports:
-      - "8080:8080/tcp"
+    network_mode: "host"
     volumes:
       - .:/app
     command: --config "/app/config.yaml"
     depends_on:
       - db
       - redis
+      - caddy
       - livekit
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      plgnmeet:
-        ipv4_address: 172.20.0.8

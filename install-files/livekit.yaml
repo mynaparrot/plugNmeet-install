@@ -5,7 +5,7 @@ rtc:
   tcp_port: 7881
   use_external_ip: true
 redis:
-  address: host.docker.internal:6379
+  address: localhost:6379
 room:
   auto_create: false
 keys:
@@ -13,7 +13,7 @@ keys:
 webhook:
   api_key: LIVEKIT_API_KEY
   urls:
-    - "http://host.docker.internal:8080/webhook"
+    - "http://localhost:8080/webhook"
 turn:
   enabled: true
   udp_port: 443

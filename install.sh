@@ -24,9 +24,6 @@ main() {
   echo -n "Please enter turn server domain (exmple: turn.example.com): "
   read TURN_SERVER_DOMAIN
 
-  echo -n "Please enter valid email address: "
-  read EMAIL_ADDRESS
-
   echo -n "Do you want to install recorder? y/n: "
   read RECORDER_INSTALL
   echo -n "Do you want to configure firewall(ufw)? y/n: "
@@ -39,7 +36,6 @@ main() {
     install_docker
   fi
 
-  install_haproxy
   prepare_server
   install_client
 
@@ -116,6 +112,7 @@ install_docker() {
 prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/config.yaml -O config.yaml
   wget ${CONFIG_DOWNLOAD_URL}/livekit.yaml -O livekit.yaml
+  wget ${CONFIG_DOWNLOAD_URL}/caddy.yaml -O caddy.yaml
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
 
   mkdir -p sql_dump
@@ -135,12 +132,20 @@ prepare_server() {
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
 
+  ## plugnmeet
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" config.yaml
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" config.yaml
 
+  ## 8.8.8.8 is using only to get default route
+  SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
+  # caddy
+  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" caddy.yaml
+  sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" caddy.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" caddy.yaml
+  sed -i "s/SERVER_IP/$SERVER_IP/g" caddy.yaml
 
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
@@ -195,59 +200,13 @@ install_recorder() {
   rm recorder.zip
 }
 
-install_haproxy() {
-  add-apt-repository ppa:vbernat/haproxy-2.4 -y
-  apt -y update && apt install -y haproxy
-  service haproxy stop
-
-  cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg_bk
-  mkdir -p /etc/haproxy/ssl
-
-  configure_lets_encrypt
-
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
-
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
-
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-  sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-
-  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-  chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-
-  service haproxy start
-}
-
-configure_lets_encrypt() {
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
-  service haproxy start
-
-  if ! which snap > /dev/null; then
-    apt install -y snapd
-  fi
-  
-  snap install core; snap refresh core; snap install --classic certbot
-  ln -s /snap/bin/certbot /usr/bin/certbot
-
-  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $LIVEKIT_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
-    --non-interactive --agree-tos --email $EMAIL_ADDRESS \
-    --http-01-port=9080; then
-    display_error "Let's Encrypt SSL request did not succeed - exiting"
-  fi
-
-  service haproxy stop
-  rm /etc/haproxy/haproxy.cfg
-}
-
 can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
   OS=$(lsb_release -si)
   if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
 
-  apt update && apt install -y --no-install-recommends software-properties-common unzip
+  apt update && apt install -y unzip net-tools
   clear
 }
 
@@ -257,7 +216,9 @@ display_error() {
 }
 
 enable_ufw() {
-  apt install -y ufw
+  if ! which ufw > /dev/null; then
+      apt install -y ufw
+  fi
 
   ufw allow ${SSH_CLIENT##* }/tcp
   ufw allow 80/tcp
@@ -265,7 +226,6 @@ enable_ufw() {
   ufw allow 7881/tcp
   ufw allow 443/udp
   ufw allow 50000:60000/udp
-  ufw allow from 172.20.0.0/24 # plugNmeet docker container
 
   ufw --force enable
 }

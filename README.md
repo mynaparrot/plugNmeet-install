@@ -29,8 +29,8 @@ You'll need a clean Ubuntu server with a public IP address. If you have a firewa
 Make sure your Ubuntu server does not come pre-installed with apache or nginx, or else the installation will fail.
 
 You'll need three subdomains that point to the public IP address of your Ubuntu server.
-Example: ```plugnmeet.example.com, livekit.example.com, turn.example.com```. A valid email address is also required to
-generate a Let's Encrypt SSL certificate.
+Example: ```plugnmeet.example.com, livekit.example.com, turn.example.com```. Script will generate a Let's Encrypt SSL
+certificate automatically.
 
 ***Note:*** If DNS fails for the three domains, the installation will be aborted.
 
