@@ -23,7 +23,7 @@ The script will create a new directory `plugNmeet` inside `/opt`. All the config
 You'll need a clean Ubuntu server with a public IP address. If you have a firewall, the following ports must be opened:
 
 ```
-80/tcp, 443/tcp, 7881/tcp, 3478/udp, 50000:60000/udp
+80/tcp, 443/tcp, 7881/tcp, 443/udp, 50000:60000/udp
 ```
 
 Make sure your Ubuntu server does not come pre-installed with apache or nginx, or else the installation will fail.

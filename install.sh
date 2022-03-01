@@ -213,6 +213,9 @@ install_haproxy() {
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
+  ## 8.8.8.8 is using only to get default route
+  SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
+  sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -247,7 +250,7 @@ can_run() {
   OS=$(lsb_release -si)
   if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
 
-  apt update && apt install -y --no-install-recommends software-properties-common unzip
+  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools
   clear
 }
 
@@ -265,7 +268,6 @@ enable_ufw() {
   ufw allow 7881/tcp
   ufw allow 443/udp
   ufw allow 50000:60000/udp
-  ufw allow from 172.20.0.0/24 # plugNmeet docker container
 
   ufw --force enable
 }
