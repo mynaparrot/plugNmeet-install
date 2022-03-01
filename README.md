@@ -5,16 +5,16 @@ This script will install all the components needed to set up your Plug-N-Meet se
 ## The components listed below will be installed:
 
 1) [Docker](https://docs.docker.com/engine/install/ubuntu/)
-2) [HAProxy](https://www.haproxy.org/)
-3) [certbot](https://certbot.eff.org/) (for let's encrypt)
-4) [Redis](https://hub.docker.com/_/redis) (inside docker)
-5) [Mariadb](https://hub.docker.com/_/mariadb) (inside docker)
-6) [LiveKit Server](https://github.com/livekit/livekit-server) (inside docker)
-7) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
-8) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
-9) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
+2) [Redis](https://hub.docker.com/_/redis) (inside docker)
+3) [Mariadb](https://hub.docker.com/_/mariadb) (inside docker)
+4) [LiveKit Server](https://github.com/livekit/livekit-server) (inside docker)
+5) [Caddy](https://caddyserver.com/). [Customized l4](https://github.com/livekit/deploy/tree/main/caddyl4) (inside
+   docker)
+6) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
+7) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
+8) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
    software e.g nodejs, xvfb, ffmpeg, google chrome)
-10) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
+9) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
 
 The script will create a new directory `plugNmeet` inside `/opt`. All the configuration files will be located there.
 
