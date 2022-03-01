@@ -13,14 +13,6 @@ services:
     volumes:
       - ./mariadb-data:/var/lib/mysql
       - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
-  caddy:
-    image: livekit/caddyl4
-    command: run --config /etc/caddy.yaml --adapter yaml
-    restart: on-failure
-    network_mode: "host"
-    volumes:
-      - ./caddy.yaml:/etc/caddy.yaml
-      - ./caddy_data:/data
   livekit:
     image: livekit/livekit-server
     restart: on-failure
@@ -30,7 +22,6 @@ services:
     command: --config "/app/livekit.yaml"
     depends_on:
       - redis
-      - caddy
   plugnmeet-api:
     image: mynaparrot/plugnmeet-server
     restart: on-failure
@@ -41,5 +32,4 @@ services:
     depends_on:
       - db
       - redis
-      - caddy
       - livekit
