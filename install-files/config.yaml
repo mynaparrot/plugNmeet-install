@@ -48,5 +48,6 @@ upload_file_settings:
     - "docx"
     - "txt"
 recorder_info:
+  # this value should be same as recorder's copy_to_dir path
   recording_files_path: "/app/recording_files"
   token_validity: 30m

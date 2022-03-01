@@ -20,19 +20,24 @@ The script will create a new directory `plugNmeet` inside `/opt`. All the config
 
 ## Requirements
 
-You'll need a clean Ubuntu server with a public IP address. If you have a firewall, the following ports must be opened:
+You'll need a clean Ubuntu server with a **public IP address**. If you have a firewall, the following ports must be
+opened:
 
 ```
-80/tcp, 443/tcp, 7881/tcp, 443/udp, 50000:60000/udp
+80/tcp
+443/tcp
+7881/tcp
+443/udp
+50000:60000/udp
 ```
 
 Make sure your Ubuntu server does not come pre-installed with apache or nginx, or else the installation will fail.
 
-You'll need three subdomains that point to the public IP address of your Ubuntu server.
+You'll need three subdomains that point to the public IP address of this Ubuntu server.
 Example: ```plugnmeet.example.com, livekit.example.com, turn.example.com```. A valid email address is also required to
-generate a Let's Encrypt SSL certificate.
+generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
-***Note:*** If DNS fails for the three domains, the installation will be aborted.
+***Note:*** If DNS fails for those three domains, the installation will be aborted.
 
 ## Start steps
 
@@ -41,9 +46,14 @@ Using SSH, connect to your Ubuntu server. Download and run the installation scri
 ```
 wget https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh
 sudo bash install.sh
+
+OR
+
+wget -qO- https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh | sudo bash
 ```
 
-Now, follow the steps. You'll receive the relevant information at the end of the installation.
+Now, follow the steps in terminal. It will ask you to enter information when necessary. You'll receive the relevant
+information at the end of the installation.
 
 ***Note:*** If you get a 404 error or the recorder stops working, you can restart service
 by `systemctl restart plugnmeet && systemctl restart plugnmeet-recorder`.

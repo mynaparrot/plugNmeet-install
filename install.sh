@@ -15,17 +15,29 @@ SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-se
 main() {
   can_run
 
-  echo -n "Please enter plugNmeet server domain (exmple: plugnmeet.example.com): "
-  read PLUG_N_MEET_SERVER_DOMAIN
+  PLUG_N_MEET_SERVER_DOMAIN=
+  while [[ $PLUG_N_MEET_SERVER_DOMAIN == "" ]]; do
+    echo -n "Please enter plugNmeet server domain (exmple: plugnmeet.example.com): "
+    read PLUG_N_MEET_SERVER_DOMAIN
+  done
 
-  echo -n "Please enter livekit server domain (exmple: livekit.example.com): "
-  read LIVEKIT_SERVER_DOMAIN
+  LIVEKIT_SERVER_DOMAIN=
+  while [[ $LIVEKIT_SERVER_DOMAIN == "" ]]; do
+    echo -n "Please enter livekit server domain (exmple: livekit.example.com): "
+    read LIVEKIT_SERVER_DOMAIN
+  done
 
-  echo -n "Please enter turn server domain (exmple: turn.example.com): "
-  read TURN_SERVER_DOMAIN
+  TURN_SERVER_DOMAIN=
+  while [[ $TURN_SERVER_DOMAIN == "" ]]; do
+    echo -n "Please enter turn server domain (exmple: turn.example.com): "
+    read TURN_SERVER_DOMAIN
+  done
 
-  echo -n "Please enter valid email address: "
-  read EMAIL_ADDRESS
+  EMAIL_ADDRESS=
+  while [[ $EMAIL_ADDRESS == "" ]]; do
+    echo -n "Please enter valid email address: "
+    read EMAIL_ADDRESS
+  done
 
   echo -n "Do you want to install recorder? y/n: "
   read RECORDER_INSTALL
@@ -35,7 +47,7 @@ main() {
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
 
-  if ! which docker-compose > /dev/null; then
+  if ! which docker-compose >/dev/null; then
     install_docker
   fi
 
@@ -51,8 +63,8 @@ main() {
     enable_ufw
   fi
 
-  systemctl start plugnmeet
-  ## database require little bit time
+  # before going next step need to wait little bit time
+  # to finish plugnmeet fully start
   echo ".."
   sleep 3
   echo "...."
@@ -66,7 +78,7 @@ main() {
 
   ## need restart if mariadb took too much time to import
   systemctl restart plugnmeet
-  
+
   if [ "$RECORDER_INSTALL" == "y" ]; then
     # need redis server to up before start recorder service
     echo ".............."
@@ -80,10 +92,10 @@ main() {
   printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
   printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
   printf "livekit server URL: https://${LIVEKIT_SERVER_DOMAIN}\n"
-  
-  printf "\n\nTo manage server: \n" 
+
+  printf "\n\nTo manage server: \n"
   printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
-  
+
   if [ "$RECORDER_INSTALL" == "y" ]; then
     printf "\n\nTo manage recorder: \n"
     printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
@@ -92,13 +104,12 @@ main() {
   printf "To test frontend: \n"
   printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
 
-  printf "\nFor further performance tuning follow: \n" 
-  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n" 
-
+  printf "\nFor further performance tuning follow: \n"
+  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n"
 }
 
 random_key() {
-  echo $(tr -dc A-Za-z0-9 < /dev/urandom | dd bs=$1 count=1 2>/dev/null)
+  echo $(tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null)
 }
 
 install_docker() {
@@ -106,8 +117,8 @@ install_docker() {
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
   echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
 
   apt update
   apt -y install docker-ce docker-ce-cli containerd.io docker-compose
@@ -141,10 +152,10 @@ prepare_server() {
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" config.yaml
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" config.yaml
 
-
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
   systemctl enable plugnmeet
+  systemctl start plugnmeet
 }
 
 install_client() {
@@ -153,9 +164,9 @@ install_client() {
   cp client/dist/assets/config_sample.js client/dist/assets/config.js
 
   sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/$PLUG_N_MEET_SERVER_DOMAIN'\;/g" \
-      client/dist/assets/config.js
+    client/dist/assets/config.js
   sed -i "s/window.LIVEKIT_SERVER_URL.*/window.LIVEKIT_SERVER_URL = 'https:\/\/$LIVEKIT_SERVER_DOMAIN'\;/g" \
-      client/dist/assets/config.js
+    client/dist/assets/config.js
 
   rm client.zip
 }
@@ -163,7 +174,7 @@ install_client() {
 prepare_recorder() {
   ## prepare chrome
   curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
-  echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+  echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
   ## prepare nodejs
   curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
@@ -172,7 +183,7 @@ prepare_recorder() {
   apt -y update && apt -y install nodejs xvfb google-chrome-stable ffmpeg
 }
 
-install_recorder() {  
+install_recorder() {
   wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder.service -O /etc/systemd/system/plugnmeet-recorder.service
   wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@main.service -O /etc/systemd/system/plugnmeet-recorder@main.service
   wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@websocket.service -O /etc/systemd/system/plugnmeet-recorder@websocket.service
@@ -184,7 +195,7 @@ install_recorder() {
   wget $RECORDER_DOWNLOAD_URL -O recorder.zip
   unzip recorder.zip
   cp recorder/config_sample.yaml recorder/config.yaml
-  
+
   WEBSOCKET_AUTH_TOKEN=$(random_key 10)
   sed -i "s/join_host.*/join_host: \"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/\?access_token=\"/g" recorder/config.yaml
   sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
@@ -227,11 +238,13 @@ configure_lets_encrypt() {
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
   service haproxy start
 
-  if ! which snap > /dev/null; then
+  if ! which snap >/dev/null; then
     apt install -y snapd
   fi
-  
-  snap install core; snap refresh core; snap install --classic certbot
+
+  snap install core
+  snap refresh core
+  snap install --classic certbot
   ln -s /snap/bin/certbot /usr/bin/certbot
 
   if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $LIVEKIT_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
@@ -260,7 +273,9 @@ display_error() {
 }
 
 enable_ufw() {
-  apt install -y ufw
+  if ! which ufw >/dev/null; then
+    apt install -y ufw
+  fi
 
   ufw allow ${SSH_CLIENT##* }/tcp
   ufw allow 80/tcp
