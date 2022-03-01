@@ -1,0 +1,50 @@
+logging:
+  logs:
+    default:
+      level: INFO
+storage:
+  "module": "file_system"
+  "root": "/data"
+apps:
+  tls:
+    certificates:
+      automate:
+        - TURN_SERVER_DOMAIN
+        - LIVEKIT_SERVER_DOMAIN
+        - PLUG_N_MEET_SERVER_DOMAIN
+  layer4:
+    servers:
+      main:
+        listen: [ "tcp4/0.0.0.0:443" ]
+        routes:
+          - match:
+              - tls:
+                  sni:
+                    - "TURN_SERVER_DOMAIN"
+            handle:
+              - handler: tls
+              - handler: proxy
+                upstreams:
+                  - dial: [ "SERVER_IP:5349" ]
+          - match:
+              - tls:
+                  sni:
+                    - "LIVEKIT_SERVER_DOMAIN"
+            handle:
+              - handler: tls
+                connection_policies:
+                  - alpn: [ "http/1.1" ]
+              - handler: proxy
+                upstreams:
+                  - dial: [ "localhost:7880" ]
+          - match:
+              - tls:
+                  sni:
+                    - "PLUG_N_MEET_SERVER_DOMAIN"
+            handle:
+              - handler: tls
+                connection_policies:
+                  - alpn: [ "http/1.1" ]
+              - handler: proxy
+                upstreams:
+                  - dial: [ "localhost:8080" ]

@@ -16,19 +16,19 @@ log_settings:
   # max age of log before rotate in days
   maxage: 2
 livekit_info:
-  host: "http://host.docker.internal:7880"
+  host: "http://localhost:7880"
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
   # value in minutes. Default 10 minutes. Client will renew token automatically
   token_validity: 10m
 redis_info:
-  host: redis
+  host: localhost
   port: "6379"
   username: ""
   password: ""
   db: 0
 mysql_info:
-  host: "db"
+  host: localhost
   port: "3306"
   username: "root"
   password: "DB_ROOT_PASSWORD"
