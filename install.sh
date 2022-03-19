@@ -65,7 +65,7 @@ main() {
   fi
 
   systemctl start plugnmeet
-  echo "\nfinishing setup..\n"
+  printf "\nFinalizing setup..\n"
   # before going next step need to wait little bit time
   # to finish plugnmeet fully start
   # we'll check etherpad because it take most of the time
