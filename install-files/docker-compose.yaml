@@ -2,11 +2,11 @@ version: "3"
 services:
   redis:
     image: redis
-    restart: on-failure
+    restart: always
     network_mode: "host"
   db:
     image: mariadb:10.6
-    restart: on-failure
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
     network_mode: "host"
@@ -15,7 +15,7 @@ services:
       - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
   livekit:
     image: livekit/livekit-server
-    restart: on-failure
+    restart: always
     network_mode: "host"
     volumes:
       - .:/app
@@ -29,7 +29,7 @@ services:
       args:
         - ETHERPAD_PLUGINS=ep_disable_chat ep_sticky_attributes
         - INSTALL_SOFFICE=true
-    restart: on-failure
+    restart: always
     network_mode: "host"
     volumes:
       - ./etherpad/APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
@@ -42,7 +42,7 @@ services:
       - redis
   plugnmeet-api:
     image: mynaparrot/plugnmeet-server
-    restart: on-failure
+    restart: always
     network_mode: "host"
     volumes:
       - .:/app
