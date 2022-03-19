@@ -39,7 +39,7 @@ generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
 ***Note:*** If DNS fails for those three domains, the installation will be aborted.
 
-## Start steps
+## Usage
 
 Using SSH, connect to your Ubuntu server. Download and run the installation script as the root user.
 
@@ -57,3 +57,18 @@ information at the end of the installation.
 
 ***Note:*** If you get a 404 error or the recorder stops working, you can restart service
 by `systemctl restart plugnmeet && systemctl restart plugnmeet-recorder`.
+
+#### Fonts installation for Etherpad (Shared notepad)
+By default `Etherpad` docker container does not install any additional fonts. When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues. The installation script won't install any additional fonts automatically for you. You may install fonts in the Ubuntu server using the commands below, and docker will share fonts with the etherpad container.
+
+```
+sudo apt update && sudo apt -y install --no-install-recommends \
+fonts-arkpandora \
+fonts-crosextra-carlito \
+fonts-crosextra-caladea \
+fonts-noto \
+fonts-noto-cjk \
+fonts-liberation \
+fontconfig \
+ttf-mscorefonts-installer
+```
