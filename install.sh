@@ -65,7 +65,7 @@ main() {
   fi
 
   systemctl start plugnmeet
-  
+  echo "\nfinishing setup..\n"
   # before going next step need to wait little bit time
   # to finish plugnmeet fully start
   # we'll check etherpad because it take most of the time
@@ -176,8 +176,8 @@ prepare_etherpad() {
   ETHERPAD_API=$(random_key 80)
   
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml  
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
 }
 
 prepare_recorder() {
