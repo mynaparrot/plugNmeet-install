@@ -10,11 +10,12 @@ This script will install all the components needed to set up your Plug-N-Meet se
 4) [Redis](https://hub.docker.com/_/redis) (inside docker)
 5) [Mariadb](https://hub.docker.com/_/mariadb) (inside docker)
 6) [LiveKit Server](https://github.com/livekit/livekit-server) (inside docker)
-7) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
-8) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
-9) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
-   software e.g nodejs, xvfb, ffmpeg, google chrome)
-10) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
+7) [Etherpad-lite](https://github.com/ether/etherpad-lite) (inside docker)
+8) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
+9) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
+10) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
+    software e.g nodejs, xvfb, ffmpeg, google chrome)
+11) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
 
 The script will create a new directory `plugNmeet` inside `/opt`. All the configuration files will be located there.
 
