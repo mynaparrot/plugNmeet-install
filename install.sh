@@ -54,6 +54,7 @@ main() {
   install_haproxy
   prepare_server
   install_client
+  prepare_etherpad
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
     install_recorder
@@ -63,18 +64,15 @@ main() {
     enable_ufw
   fi
 
+  systemctl start plugnmeet
+  
   # before going next step need to wait little bit time
   # to finish plugnmeet fully start
-  echo ".."
-  sleep 3
-  echo "...."
-  sleep 3
-  echo "......"
-  sleep 3
-  echo "........"
-  sleep 3
-  echo "............"
-  sleep 3
+  # we'll check etherpad because it take most of the time
+  while ! nc -z localhost 9001; do
+    printf "."
+    sleep 0.1 # wait for 1/10 of the second before check again
+  done
 
   ## need restart if mariadb took too much time to import
   systemctl restart plugnmeet
@@ -155,7 +153,6 @@ prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
   systemctl enable plugnmeet
-  systemctl start plugnmeet
 }
 
 install_client() {
@@ -169,6 +166,18 @@ install_client() {
     client/dist/assets/config.js
 
   rm client.zip
+}
+
+prepare_etherpad() {
+  mkdir -p etherpad
+  wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
+  wget ${CONFIG_DOWNLOAD_URL}/APIKEY.txt -O etherpad/APIKEY.txt
+  
+  ETHERPAD_API=$(random_key 80)
+  
+  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
+  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
 }
 
 prepare_recorder() {
