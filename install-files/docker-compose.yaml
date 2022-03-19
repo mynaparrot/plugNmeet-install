@@ -4,12 +4,22 @@ services:
     image: redis
     restart: always
     network_mode: "host"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 1s
+      retries: 5
   db:
     image: mariadb:10.6
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
     network_mode: "host"
+    healthcheck:
+      test: "mysql -u root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\""
+      interval: 10s
+      timeout: 1s
+      retries: 5
     volumes:
       - ./mariadb-data:/var/lib/mysql
       - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
@@ -22,6 +32,11 @@ services:
     command: --config "/app/livekit.yaml"
     depends_on:
       - redis
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:7880 || exit 1
+      interval: 20s
+      timeout: 1s
+      retries: 5
   etherpad:
     build:
       # https://github.com/ether/etherpad-lite/releases/tag/1.8.17
@@ -51,3 +66,8 @@ services:
       - db
       - redis
       - livekit
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
+      interval: 20s
+      timeout: 1s
+      retries: 5
