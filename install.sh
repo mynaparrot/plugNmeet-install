@@ -176,8 +176,8 @@ prepare_etherpad() {
   ETHERPAD_API=$(random_key 80)
   
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml  
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
+  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml        
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
 }
 
 prepare_recorder() {
@@ -272,7 +272,7 @@ can_run() {
   OS=$(lsb_release -si)
   if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
 
-  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools
+  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools netcat
   clear
 }
 
