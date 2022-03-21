@@ -54,6 +54,8 @@ upload_file_settings:
   allowed_types:
     - "jpg"
     - "png"
+    - "jpeg"
+    - "svg"
     - "pdf"
     - "docx"
     - "txt"
@@ -61,3 +63,13 @@ recorder_info:
   # this value should be same as recorder's copy_to_dir path
   recording_files_path: "/app/recording_files"
   token_validity: 30m
+shared_notepad:
+  enabled: true
+  # multiple hosts can be added here
+  # server will be selected based on load
+  # the value of id should be unique
+  etherpad_hosts:
+    -
+      id: "node_01"
+      host: "PLUG_N_MEET_SERVER_DOMAIN/etherpad"
+      api_key: "ETHERPAD_API"

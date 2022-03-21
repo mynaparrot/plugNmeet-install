@@ -10,11 +10,12 @@ This script will install all the components needed to set up your Plug-N-Meet se
 4) [Redis](https://hub.docker.com/_/redis) (inside docker)
 5) [Mariadb](https://hub.docker.com/_/mariadb) (inside docker)
 6) [LiveKit Server](https://github.com/livekit/livekit-server) (inside docker)
-7) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
-8) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
-9) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
-   software e.g nodejs, xvfb, ffmpeg, google chrome)
-10) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
+7) [Etherpad-lite](https://github.com/ether/etherpad-lite) (inside docker)
+8) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
+9) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
+10) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
+    software e.g nodejs, xvfb, ffmpeg, google chrome)
+11) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
 
 The script will create a new directory `plugNmeet` inside `/opt`. All the configuration files will be located there.
 
@@ -39,7 +40,7 @@ generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
 ***Note:*** If DNS fails for those three domains, the installation will be aborted.
 
-## Start steps
+## Usage
 
 Using SSH, connect to your Ubuntu server. Download and run the installation script as the root user.
 
@@ -57,3 +58,18 @@ information at the end of the installation.
 
 ***Note:*** If you get a 404 error or the recorder stops working, you can restart service
 by `systemctl restart plugnmeet && systemctl restart plugnmeet-recorder`.
+
+#### Fonts installation for Etherpad (Shared notepad)
+By default `Etherpad` docker container does not install any additional fonts. When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues. The installation script won't install any additional fonts automatically for you. You may install fonts in the Ubuntu server using the commands below, and docker will share fonts with the etherpad container.
+
+```
+sudo apt update && sudo apt -y install --no-install-recommends \
+fonts-arkpandora \
+fonts-crosextra-carlito \
+fonts-crosextra-caladea \
+fonts-noto \
+fonts-noto-cjk \
+fonts-liberation \
+fontconfig \
+ttf-mscorefonts-installer
+```
