@@ -287,6 +287,7 @@ enable_ufw() {
   fi
 
   ufw allow ${SSH_CLIENT##* }/tcp
+  ufw allow 22/tcp # for safety
   ufw allow 80/tcp
   ufw allow 443/tcp
   ufw allow 7881/tcp
