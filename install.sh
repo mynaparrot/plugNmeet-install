@@ -18,31 +18,31 @@ main() {
   PLUG_N_MEET_SERVER_DOMAIN=
   while [[ $PLUG_N_MEET_SERVER_DOMAIN == "" ]]; do
     echo -n "Please enter plugNmeet server domain (exmple: plugnmeet.example.com): "
-    read PLUG_N_MEET_SERVER_DOMAIN
+    read -r PLUG_N_MEET_SERVER_DOMAIN
   done
 
   LIVEKIT_SERVER_DOMAIN=
   while [[ $LIVEKIT_SERVER_DOMAIN == "" ]]; do
     echo -n "Please enter livekit server domain (exmple: livekit.example.com): "
-    read LIVEKIT_SERVER_DOMAIN
+    read -r LIVEKIT_SERVER_DOMAIN
   done
 
   TURN_SERVER_DOMAIN=
   while [[ $TURN_SERVER_DOMAIN == "" ]]; do
     echo -n "Please enter turn server domain (exmple: turn.example.com): "
-    read TURN_SERVER_DOMAIN
+    read -r TURN_SERVER_DOMAIN
   done
 
   EMAIL_ADDRESS=
   while [[ $EMAIL_ADDRESS == "" ]]; do
     echo -n "Please enter valid email address: "
-    read EMAIL_ADDRESS
+    read -r EMAIL_ADDRESS
   done
 
   echo -n "Do you want to install recorder? y/n: "
-  read RECORDER_INSTALL
+  read -r RECORDER_INSTALL
   echo -n "Do you want to configure firewall(ufw)? y/n: "
-  read CONFIGURE_UFW
+  read -r CONFIGURE_UFW
 
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
@@ -107,7 +107,7 @@ main() {
 }
 
 random_key() {
-  echo $(tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null)
+  tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null
 }
 
 install_docker() {
