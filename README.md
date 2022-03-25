@@ -65,7 +65,7 @@ ttf-mscorefonts-installer
 4) [Redis](https://hub.docker.com/_/redis) (inside docker)
 5) [Mariadb](https://hub.docker.com/_/mariadb) (inside docker)
 6) [LiveKit Server](https://github.com/livekit/livekit-server) (inside docker)
-7) [Etherpad-lite](https://github.com/ether/etherpad-lite) (inside docker)
+7) [Etherpad-lite](https://github.com/mynaparrot/plugNmeet-etherpad) (inside docker)
 8) [Plug-N-Meet Server](https://github.com/mynaparrot/plugNmeet-server) (inside docker)
 9) [Plug-N-Meet Client](https://github.com/mynaparrot/plugNmeet-client)
 10) Optional, [Plug-N-Meet Recorder](https://github.com/mynaparrot/plugNmeet-recorder) (with all require pieces of
