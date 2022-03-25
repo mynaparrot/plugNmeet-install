@@ -128,6 +128,8 @@ prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
 
   mkdir -p sql_dump
+  mkdir -p redis-data
+  chmod 777 redis-data
   wget ${SQL_DUMP_DOWNLOAD_URL} -O sql_dump/install.sql
 
   ## change livekit api & turn
