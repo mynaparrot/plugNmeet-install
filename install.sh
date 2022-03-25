@@ -70,8 +70,8 @@ main() {
   # to finish plugnmeet fully start
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
-    printf "."
-    sleep 0.1 # wait for 1/10 of the second before check again
+    journalctl -u plugnmeet --no-pager -n 1
+    sleep 3 # wait before check again
   done
 
   ## need restart if mariadb took too much time to import
