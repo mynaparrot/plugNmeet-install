@@ -239,8 +239,8 @@ install_haproxy() {
   SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
   sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
 
-  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-  chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
+  wget ${CONFIG_DOWNLOAD_URL}/001-reload-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-reload-haproxy
+  chmod +x /etc/letsencrypt/renewal-hooks/post/001-reload-haproxy
 
   service haproxy start
 }
