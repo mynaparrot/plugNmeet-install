@@ -56,7 +56,6 @@ fonts-liberation \
 fontconfig \
 ttf-mscorefonts-installer
 ```
-
 #### The components listed below will be installed:
 
 1) [Docker](https://docs.docker.com/engine/install/ubuntu/)
