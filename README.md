@@ -73,3 +73,15 @@ ttf-mscorefonts-installer
 11) Optional, [UFW firewall](https://help.ubuntu.com/community/UFW)
 
 The script will create a new directory `plugNmeet` inside `/opt`. All the configuration files will be located there.
+
+## Update
+To update you can use `update.sh` script. This will update all the docker images, client & recorder (if installed).
+
+```
+wget https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/update.sh
+sudo bash update.sh
+
+OR
+
+sudo su -c "bash <(wget -qO- https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/update.sh)" root
+```

@@ -29,12 +29,18 @@ docker image prune -f
 # let's take backup first
 printf "\nupdating client\n"
 sleep 1
+# remove previous backup
+if [ -d "client_bk" ]; then
+  rm -rf client_bk
+fi 
+
+# take backup
 mv -f client client_bk
 wget $CLIENT_DOWNLOAD_URL -O client.zip
 unzip -o client.zip
 
 cp -f client_bk/dist/assets/config.js client/dist/assets/config.js
-rm -rf client_bk client.zip
+rm -rf client.zip
 
 service plugnmeet restart
 
@@ -44,13 +50,19 @@ if [ -d "recorder" ]; then
   sleep 1
   service plugnmeet-recorder stop
   
+  # remove previous backup
+  if [ -d "recorder_bk" ]; then
+    rm -rf recorder_bk
+  fi 
+  
+  # take backup
   mv -f recorder recorder_bk
   wget $RECORDER_DOWNLOAD_URL -O recorder.zip
   unzip -o recorder.zip
   
   cp -f recorder_bk/config.yaml recorder/config.yaml
   npm install -C recorder
-  rm -rf recorder_bk recorder.zip
+  rm -rf recorder.zip
   
   service plugnmeet-recorder start
 fi
