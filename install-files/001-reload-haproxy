@@ -1,4 +1,0 @@
-#!/bin/bash -e
-service haproxy reload
-
-## you can use other logics here too
