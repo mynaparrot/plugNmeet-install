@@ -174,9 +174,9 @@ prepare_etherpad() {
   mkdir -p etherpad
   wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
   wget ${CONFIG_DOWNLOAD_URL}/APIKEY.txt -O etherpad/APIKEY.txt
-  
+
   ETHERPAD_API=$(random_key 80)
-  
+
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
@@ -235,8 +235,8 @@ install_haproxy() {
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-  ## 8.8.8.8 is using only to get default route
-  SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
+
+  get_public_ip
   sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -274,7 +274,7 @@ can_run() {
   OS=$(lsb_release -si)
   if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
 
-  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git
+  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
   clear
 }
 
@@ -283,16 +283,24 @@ display_error() {
   exit 1
 }
 
+get_public_ip() {
+  # best way to get ip using one of domain
+  # turn server's domain can't be behind proxy
+  SERVER_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+}
+
 enable_ufw() {
   if ! which ufw >/dev/null; then
     apt install -y ufw
   fi
   ## install fail2ban server too
-  if ! which fail2ban-server > /dev/null; then
-      apt-get install -y fail2ban
+  if ! which fail2ban-server >/dev/null; then
+    apt-get install -y fail2ban
   fi
 
-  ufw allow ${SSH_CLIENT##* }/tcp
+  SSH_PORT=$(echo "$SSH_CLIENT" | cut -d' ' -f 3)
+  
+  ufw allow $SSH_PORT/tcp
   ufw allow 22/tcp # for safety
   ufw allow 80/tcp
   ufw allow 443/tcp
