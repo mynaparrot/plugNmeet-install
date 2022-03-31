@@ -287,6 +287,10 @@ enable_ufw() {
   if ! which ufw >/dev/null; then
     apt install -y ufw
   fi
+  ## install fail2ban server too
+  if ! which fail2ban-server > /dev/null; then
+      apt-get install -y fail2ban
+  fi
 
   ufw allow ${SSH_CLIENT##* }/tcp
   ufw allow 22/tcp # for safety
