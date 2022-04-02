@@ -68,11 +68,21 @@ main() {
   printf "\nFinalizing setup..\n"
   # before going next step need to wait little bit time
   # to finish plugnmeet fully start
+  
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
     journalctl -u plugnmeet --no-pager -n 1
     sleep 3 # wait before check again
   done
+  # check if database is up
+  while ! nc -z localhost 3306; do
+    journalctl -u plugnmeet --no-pager -n 1
+    sleep 3 # wait before check again
+  done
+  
+  printf "\n................\n"
+  sleep 5
+  systemctl restart plugnmeet
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
     # need redis server to up before start recorder service
@@ -297,7 +307,7 @@ enable_ufw() {
   fi
 
   SSH_PORT=$(echo "$SSH_CLIENT" | cut -d' ' -f 3)
-  
+
   ufw allow $SSH_PORT/tcp
   ufw allow 22/tcp # for safety
   ufw allow 80/tcp
