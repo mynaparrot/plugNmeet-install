@@ -274,7 +274,8 @@ can_run() {
   OS=$(lsb_release -si)
   if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
 
-  apt update && apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
+  apt update && apt upgrade -y && apt dist-upgrade -y
+  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
   clear
 }
 
