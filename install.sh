@@ -74,9 +74,6 @@ main() {
     sleep 3 # wait before check again
   done
 
-  ## need restart if mariadb took too much time to import
-  systemctl restart plugnmeet
-
   if [ "$RECORDER_INSTALL" == "y" ]; then
     # need redis server to up before start recorder service
     echo ".............."
