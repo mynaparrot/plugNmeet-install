@@ -340,8 +340,8 @@ start_services() {
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
     printf "\nstarting recorder..\n"
-    # wait for redis
-    while ! nc -z localhost 6379; do
+    # wait for plugnmeet
+    while ! nc -z localhost 8080; do
       printf "."
       sleep 1 # wait before check again
     done
