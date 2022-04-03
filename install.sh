@@ -64,32 +64,8 @@ main() {
     enable_ufw
   fi
 
-  systemctl start plugnmeet
   printf "\nFinalizing setup..\n"
-  # before going next step need to wait little bit time
-  # to finish plugnmeet fully start
-  
-  # we'll check etherpad because it take most of the time
-  while ! nc -z localhost 9001; do
-    journalctl -u plugnmeet --no-pager -n 1
-    sleep 3 # wait before check again
-  done
-  # check if database is up
-  while ! nc -z localhost 3306; do
-    journalctl -u plugnmeet --no-pager -n 1
-    sleep 3 # wait before check again
-  done
-  
-  printf "\n................\n"
-  sleep 5
-  systemctl restart plugnmeet
-
-  if [ "$RECORDER_INSTALL" == "y" ]; then
-    # need redis server to up before start recorder service
-    echo ".............."
-    sleep 5
-    systemctl start plugnmeet-recorder
-  fi
+  start_services
 
   clear
   printf "Installation completed!\n\n"
@@ -317,6 +293,60 @@ enable_ufw() {
   ufw allow 50000:60000/udp
 
   ufw --force enable
+}
+
+start_services() {
+  # first start redis
+  printf "\nstarting redis..\n"
+  docker-compose up -d redis
+  # check if redis is up
+  while ! nc -z localhost 6379; do
+    docker-compose logs --tail=1
+    sleep 1 # wait before check again
+  done
+
+  # now start db & etherpad
+  printf "\nstarting db & etherpad..\n"
+  docker-compose up -d db etherpad
+  # we'll check etherpad because it take most of the time
+  while ! nc -z localhost 9001; do
+    docker-compose logs --tail=1
+    sleep 1 # wait before check again
+  done
+
+  # check if database is up
+  while ! nc -z localhost 3306; do
+    docker-compose logs --tail=1
+    sleep 1 # wait before check again
+  done
+
+  # now start livekit & plugnmeet-api
+  printf "\nstarting livekit & plugnmeet..\n"
+  docker-compose up -d livekit plugnmeet-api
+  # check if livekit is up
+  while ! nc -z localhost 7880; do
+    docker-compose logs --tail=1
+    sleep 3 # wait before check again
+  done
+
+  # check if plugnmeet-api is up
+  while ! nc -z localhost 8080; do
+    docker-compose logs --tail=1
+    sleep 3 # wait before check again
+  done
+
+  ## finally restart all service
+  systemctl restart plugnmeet
+
+  if [ "$RECORDER_INSTALL" == "y" ]; then
+    printf "\nstarting recorder..\n"
+    # wait for redis
+    while ! nc -z localhost 6379; do
+      printf "."
+      sleep 1 # wait before check again
+    done
+    systemctl start plugnmeet-recorder
+  fi
 }
 
 main "$@" || exit 1
