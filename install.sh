@@ -196,7 +196,7 @@ install_recorder() {
 
   prepare_recorder
 
-  npm install -C recorder
+  npm install --production -C recorder
   rm recorder.zip
 }
 
