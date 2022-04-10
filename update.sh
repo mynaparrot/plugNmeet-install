@@ -32,7 +32,7 @@ sleep 1
 # remove previous backup
 if [ -d "client_bk" ]; then
   rm -rf client_bk
-fi 
+fi
 
 # take backup
 mv -f client client_bk
@@ -42,6 +42,13 @@ unzip -o client.zip
 cp -f client_bk/dist/assets/config.js client/dist/assets/config.js
 rm -rf client.zip
 
+# wait until plugNmeet api ready
+while ! nc -z localhost 8080; do
+  docker-compose logs --tail=1
+  sleep 3 # wait before check again
+done
+
+## now restart service
 service plugnmeet restart
 
 ## recorder update
@@ -49,21 +56,27 @@ if [ -d "recorder" ]; then
   printf "\nupdating recorder\n"
   sleep 1
   service plugnmeet-recorder stop
-  
+
   # remove previous backup
   if [ -d "recorder_bk" ]; then
     rm -rf recorder_bk
-  fi 
-  
+  fi
+
   # take backup
   mv -f recorder recorder_bk
   wget $RECORDER_DOWNLOAD_URL -O recorder.zip
   unzip -o recorder.zip
-  
+
   cp -f recorder_bk/config.yaml recorder/config.yaml
-  npm install -C recorder
+  npm install --production -C recorder
   rm -rf recorder.zip
-  
+
+  # make sure redis is up
+  while ! nc -z localhost 6379; do
+    docker-compose logs --tail=1
+    sleep 1 # wait before check again
+  done
+
   service plugnmeet-recorder start
 fi
 
