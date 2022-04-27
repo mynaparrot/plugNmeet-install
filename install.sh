@@ -86,7 +86,9 @@ main() {
   printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
 
   printf "\nFor further performance tuning follow: \n"
-  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n"
+  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n"
+  printf "\nFonts installation (Required) \n"
+  printf "https://github.com/mynaparrot/plugNmeet-install#fonts-installation-required\n\n"
 }
 
 random_key() {
