@@ -55,6 +55,7 @@ main() {
   prepare_server
   install_client
   prepare_etherpad
+  install_fonts
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
     install_recorder
@@ -86,9 +87,7 @@ main() {
   printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
 
   printf "\nFor further performance tuning follow: \n"
-  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n"
-  printf "\nFonts installation (Required) \n"
-  printf "https://github.com/mynaparrot/plugNmeet-install#fonts-installation-required\n\n"
+  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n"
 }
 
 random_key() {
@@ -295,6 +294,27 @@ enable_ufw() {
   ufw allow 50000:60000/udp
 
   ufw --force enable
+}
+
+install_fonts() {
+  apt update && apt -y install --no-install-recommends \
+    fonts-arkpandora \
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-noto-core \
+    fonts-noto-mono \
+    fonts-noto-ui-core \
+    fonts-liberation \
+    fonts-dejavu \
+    fonts-dejavu-extra \
+    fonts-liberation \
+    fonts-liberation2 \
+    fonts-linuxlibertine \
+    fonts-sil-gentium \
+    fonts-sil-gentium-basic \
+    fontconfig
 }
 
 start_services() {
