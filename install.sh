@@ -197,7 +197,7 @@ install_recorder() {
 
   prepare_recorder
 
-  npm install --production -C recorder
+  npm install --ignore-scripts --production -C recorder
   rm recorder.zip
 }
 
@@ -319,49 +319,49 @@ install_fonts() {
 
 start_services() {
   # first start redis
-  printf "\nstarting redis..\n"
+  printf "\nStarting redis..\n"
   docker-compose up -d redis
   # check if redis is up
   while ! nc -z localhost 6379; do
-    docker-compose logs --tail=1
+    printf "."
     sleep 1 # wait before check again
   done
 
   # now start db & etherpad
-  printf "\nstarting db & etherpad..\n"
+  printf "\nStarting db & etherpad..\n"
   docker-compose up -d db etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
-    docker-compose logs --tail=1
+    printf "."
     sleep 1 # wait before check again
   done
 
   # check if database is up
   while ! nc -z localhost 3306; do
-    docker-compose logs --tail=1
+    printf "."
     sleep 1 # wait before check again
   done
 
   # now start livekit & plugnmeet-api
-  printf "\nstarting livekit & plugnmeet..\n"
+  printf "\nStarting livekit & plugnmeet..\n"
   docker-compose up -d livekit plugnmeet-api
   # check if livekit is up
   while ! nc -z localhost 7880; do
-    docker-compose logs --tail=1
-    sleep 3 # wait before check again
+    printf "."
+    sleep 1 # wait before check again
   done
 
   # check if plugnmeet-api is up
   while ! nc -z localhost 8080; do
-    docker-compose logs --tail=1
-    sleep 3 # wait before check again
+    printf "."
+    sleep 1 # wait before check again
   done
 
   ## finally restart all service
   systemctl restart plugnmeet
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\nstarting recorder..\n"
+    printf "\nStarting recorder..\n"
     # wait for plugnmeet
     while ! nc -z localhost 8080; do
       printf "."
