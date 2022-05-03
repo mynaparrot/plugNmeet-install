@@ -329,7 +329,8 @@ start_services() {
 
   # now start db & etherpad
   printf "\nStarting db & etherpad..\n"
-  docker-compose up -d db etherpad
+  docker-compose up -d db
+  docker-compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
     printf "."
@@ -343,8 +344,9 @@ start_services() {
   done
 
   # now start livekit & plugnmeet-api
-  printf "\nStarting livekit & plugnmeet..\n"
-  docker-compose up -d livekit plugnmeet-api
+  printf "\nStarting livekit & plugNmeet..\n"
+  docker-compose up -d livekit
+  docker-compose up -d plugnmeet
   # check if livekit is up
   while ! nc -z localhost 7880; do
     printf "."

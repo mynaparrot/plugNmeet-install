@@ -52,7 +52,7 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     depends_on:
       - redis
-  plugnmeet-api:
+  plugnmeet:
     image: mynaparrot/plugnmeet-server
     restart: always
     network_mode: "host"
