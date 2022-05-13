@@ -42,18 +42,31 @@ information at the end of the installation.
 ***Note:*** If you get a 404 error or the recorder stops working, you can restart service
 by `systemctl restart plugnmeet && systemctl restart plugnmeet-recorder`.
 
-#### Fonts installation for Etherpad (Shared notepad)
-By default `Etherpad` docker container does not install any additional fonts. When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues. The installation script won't install any additional fonts automatically for you. You may install fonts in the Ubuntu server using the commands below, and docker will share fonts with the etherpad container.
+#### Fonts installation 
+When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues because of font missing. You may install additional fonts in the Ubuntu server using the commands below:
 
 ```
 sudo apt update && sudo apt -y install --no-install-recommends \
-fonts-arkpandora \
-fonts-crosextra-carlito \
-fonts-crosextra-caladea \
-fonts-noto \
-fonts-noto-cjk \
-fonts-liberation \
-fontconfig \
+culmus \
+fonts-beng \
+fonts-hosny-amiri \
+fonts-lklug-sinhala \
+fonts-lohit-guru \
+fonts-lohit-knda \
+fonts-samyak-gujr \
+fonts-samyak-mlym \
+fonts-samyak-taml \
+fonts-sarai \
+fonts-sil-abyssinica \
+fonts-sil-padauk \
+fonts-telu \
+fonts-thai-tlwg \
+ttf-wqy-zenhei \
+fonts-arphic-ukai \
+fonts-arphic-uming \
+fonts-ipafont-mincho \
+fonts-ipafont-gothic \
+fonts-unfonts-core \
 ttf-mscorefonts-installer
 ```
 #### The components listed below will be installed:
