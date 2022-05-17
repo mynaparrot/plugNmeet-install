@@ -192,7 +192,9 @@ install_recorder() {
   cp recorder/config_sample.yaml recorder/config.yaml
 
   WEBSOCKET_AUTH_TOKEN=$(random_key 10)
-  sed -i "s/join_host.*/join_host: \"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/\?access_token=\"/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\"/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" recorder/config.yaml
   sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
 
   prepare_recorder
