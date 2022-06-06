@@ -4,7 +4,7 @@ This script will install all the components needed to set up your Plug-N-Meet se
 
 ## Requirements
 
-You'll need a clean Ubuntu server with a **public IP address**. If you have a firewall, the following ports must be
+You'll need a clean Ubuntu or Debian server with a **public IP address**. If you have a firewall, the following ports must be
 opened:
 
 ```
@@ -15,9 +15,9 @@ opened:
 50000:60000/udp
 ```
 
-Make sure your Ubuntu server does not come pre-installed with apache or nginx, or else the installation will fail.
+Make sure your Ubuntu/Debian server does not come pre-installed with apache or nginx, or else the installation will fail.
 
-You'll need three subdomains that point to the public IP address of this Ubuntu server.
+You'll need three subdomains that point to the public IP address of this Ubuntu/Debian server.
 Example: ```plugnmeet.example.com, livekit.example.com, turn.example.com```. A valid email address is also required to
 generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
@@ -25,7 +25,7 @@ generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
 ## Usage
 
-Using SSH, connect to your Ubuntu server. Download and run the installation script as the root user.
+Using SSH, connect to your Ubuntu/Debian server. Download and run the installation script as the root user.
 
 ```
 wget https://raw.githubusercontent.com/mynaparrot/plugNmeet-install/main/install.sh
@@ -43,7 +43,7 @@ information at the end of the installation.
 by `systemctl restart plugnmeet && systemctl restart plugnmeet-recorder`.
 
 #### Fonts installation 
-When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues because of font missing. You may install additional fonts in the Ubuntu server using the commands below:
+When exporting or importing Microsoft Word files that contain characters other than English, you may run into issues because of font missing. You may install additional fonts in the Ubuntu/Debian server using the commands below:
 
 ```
 sudo apt update && sudo apt -y install --no-install-recommends \

@@ -96,11 +96,19 @@ random_key() {
 
 install_docker() {
   apt -y install ca-certificates curl gnupg lsb-release
+  OS=$(lsb_release -si)
 
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+  if [ "$OS" == "Ubuntu" ]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+  elif [ "$OS" == "Debian" ]; then
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  fi
 
   apt update
   apt -y install docker-ce docker-ce-cli containerd.io docker-compose
@@ -204,7 +212,18 @@ install_recorder() {
 }
 
 install_haproxy() {
-  add-apt-repository ppa:vbernat/haproxy-2.4 -y
+  OS=$(lsb_release -si)
+
+  if [ "$OS" == "Ubuntu" ]; then
+    add-apt-repository ppa:vbernat/haproxy-2.4 -y
+  elif [ "$OS" == "Debian" ]; then
+    curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
+      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
+    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
+      http://haproxy.debian.net bullseye-backports-2.4 main \
+      >/etc/apt/sources.list.d/haproxy.list
+  fi
+
   apt -y update && apt install -y haproxy
   service haproxy stop
 
@@ -258,7 +277,7 @@ can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
   OS=$(lsb_release -si)
-  if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
+  if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
