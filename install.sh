@@ -73,7 +73,6 @@ main() {
   printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
   printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
   printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
-  printf "livekit server URL: https://${LIVEKIT_SERVER_DOMAIN}\n"
 
   printf "\n\nTo manage server: \n"
   printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
@@ -155,8 +154,6 @@ install_client() {
   cp client/dist/assets/config_sample.js client/dist/assets/config.js
 
   sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/$PLUG_N_MEET_SERVER_DOMAIN'\;/g" \
-    client/dist/assets/config.js
-  sed -i "s/window.LIVEKIT_SERVER_URL.*/window.LIVEKIT_SERVER_URL = 'https:\/\/$LIVEKIT_SERVER_DOMAIN'\;/g" \
     client/dist/assets/config.js
 
   rm client.zip
