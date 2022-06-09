@@ -13,7 +13,7 @@ keys:
 webhook:
   api_key: LIVEKIT_API_KEY
   urls:
-    - "http://localhost:8080/webhook"
+    - "https://PLUG_N_MEET_SERVER_DOMAIN/webhook"
 turn:
   enabled: true
   udp_port: 443

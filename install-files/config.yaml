@@ -26,7 +26,7 @@ log_settings:
   # max age of log before rotate in days
   maxage: 2
 livekit_info:
-  host: "http://localhost:7880"
+  host: "https://LIVEKIT_SERVER_DOMAIN"
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
   # value in minutes. Default 10 minutes. Client will renew token automatically
@@ -73,5 +73,5 @@ shared_notepad:
   etherpad_hosts:
     -
       id: "node_01"
-      host: "PLUG_N_MEET_SERVER_DOMAIN/etherpad"
+      host: "ETHERPAD_SERVER_DOMAIN"
       api_key: "ETHERPAD_API"
