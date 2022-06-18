@@ -1,7 +1,7 @@
 version: "3"
 services:
   redis:
-    image: redis
+    image: redis:6
     restart: always
     network_mode: "host"
     volumes:
@@ -31,6 +31,7 @@ services:
     network_mode: "host"
     volumes:
       - .:/app
+      - /etc/ssl/certs/:/etc/ssl/certs/:ro
     command: --config "/app/livekit.yaml"
     depends_on:
       - redis
@@ -58,6 +59,7 @@ services:
     network_mode: "host"
     volumes:
       - .:/app
+      - /etc/ssl/certs/:/etc/ssl/certs/:ro
       - /usr/share/fonts/:/usr/share/fonts/:ro
       - /etc/fonts/:/etc/fonts/:ro
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro

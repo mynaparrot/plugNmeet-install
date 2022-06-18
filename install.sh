@@ -73,7 +73,6 @@ main() {
   printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
   printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
   printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
-  printf "livekit server URL: https://${LIVEKIT_SERVER_DOMAIN}\n"
 
   printf "\n\nTo manage server: \n"
   printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
@@ -96,11 +95,19 @@ random_key() {
 
 install_docker() {
   apt -y install ca-certificates curl gnupg lsb-release
+  OS=$(lsb_release -si)
 
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+  if [ "$OS" == "Ubuntu" ]; then
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+  elif [ "$OS" == "Debian" ]; then
+    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  fi
 
   apt update
   apt -y install docker-ce docker-ce-cli containerd.io docker-compose
@@ -129,7 +136,9 @@ prepare_server() {
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" livekit.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" livekit.yaml
 
+  sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" config.yaml
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
@@ -148,8 +157,6 @@ install_client() {
 
   sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/$PLUG_N_MEET_SERVER_DOMAIN'\;/g" \
     client/dist/assets/config.js
-  sed -i "s/window.LIVEKIT_SERVER_URL.*/window.LIVEKIT_SERVER_URL = 'https:\/\/$LIVEKIT_SERVER_DOMAIN'\;/g" \
-    client/dist/assets/config.js
 
   rm client.zip
 }
@@ -163,7 +170,7 @@ prepare_etherpad() {
 
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
   sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
 }
 
 prepare_recorder() {
@@ -192,7 +199,9 @@ install_recorder() {
   cp recorder/config_sample.yaml recorder/config.yaml
 
   WEBSOCKET_AUTH_TOKEN=$(random_key 10)
-  sed -i "s/join_host.*/join_host: \"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/\?access_token=\"/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\"/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" recorder/config.yaml
   sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
 
   prepare_recorder
@@ -202,7 +211,18 @@ install_recorder() {
 }
 
 install_haproxy() {
-  add-apt-repository ppa:vbernat/haproxy-2.4 -y
+  OS=$(lsb_release -si)
+
+  if [ "$OS" == "Ubuntu" ]; then
+    add-apt-repository ppa:vbernat/haproxy-2.4 -y
+  elif [ "$OS" == "Debian" ]; then
+    curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
+      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
+    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
+      http://haproxy.debian.net bullseye-backports-2.4 main \
+      >/etc/apt/sources.list.d/haproxy.list
+  fi
+
   apt -y update && apt install -y haproxy
   service haproxy stop
 
@@ -256,7 +276,7 @@ can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
   OS=$(lsb_release -si)
-  if [ "$OS" != "Ubuntu" ]; then display_error "This script will require Ubuntu server."; fi
+  if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
