@@ -132,7 +132,7 @@ prepare_server() {
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" livekit.yaml
 
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
