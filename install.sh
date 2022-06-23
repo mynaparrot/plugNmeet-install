@@ -21,12 +21,6 @@ main() {
     read -r PLUG_N_MEET_SERVER_DOMAIN
   done
 
-  LIVEKIT_SERVER_DOMAIN=
-  while [[ $LIVEKIT_SERVER_DOMAIN == "" ]]; do
-    echo -n "Please enter livekit server domain (exmple: livekit.example.com): "
-    read -r LIVEKIT_SERVER_DOMAIN
-  done
-
   TURN_SERVER_DOMAIN=
   while [[ $TURN_SERVER_DOMAIN == "" ]]; do
     echo -n "Please enter turn server domain (exmple: turn.example.com): "
@@ -138,7 +132,7 @@ prepare_server() {
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" livekit.yaml
 
-  sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
@@ -237,7 +231,6 @@ install_haproxy() {
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
 
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-  sed -i "s/LIVEKIT_SERVER_DOMAIN/$LIVEKIT_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
 
   get_public_ip
@@ -262,7 +255,7 @@ configure_lets_encrypt() {
   snap install --classic certbot
   ln -s /snap/bin/certbot /usr/bin/certbot
 
-  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $LIVEKIT_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
+  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
     --non-interactive --agree-tos --email $EMAIL_ADDRESS \
     --http-01-port=9080; then
     display_error "Let's Encrypt SSL request did not succeed - exiting"

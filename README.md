@@ -17,8 +17,8 @@ opened:
 
 Make sure your Ubuntu/Debian server does not come pre-installed with apache or nginx, or else the installation will fail.
 
-You'll need three subdomains that point to the public IP address of this Ubuntu/Debian server.
-Example: ```plugnmeet.example.com, livekit.example.com, turn.example.com```. A valid email address is also required to
+You'll need 2 subdomains that point to the public IP address of this Ubuntu/Debian server.
+Example: ```plugnmeet.example.com, turn.example.com```. A valid email address is also required to
 generate a [Let's Encrypt](https://letsencrypt.org/) SSL certificate.
 
 ***Note:*** If DNS fails for those three domains, the installation will be aborted.
