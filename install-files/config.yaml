@@ -26,7 +26,7 @@ log_settings:
   # max age of log before rotate in days
   maxage: 2
 livekit_info:
-  host: "https://LIVEKIT_SERVER_DOMAIN"
+  host: "https://PLUG_N_MEET_SERVER_DOMAIN/livekit"
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
   # value in minutes. Default 10 minutes. Client will renew token automatically
