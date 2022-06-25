@@ -45,8 +45,8 @@ mysql_info:
   prefix: "pnm_"
 upload_file_settings:
   path: "/app/upload"
-  # file size in MB. Default 10MB
-  max_size: 10
+  # file size in MB. Default 50MB
+  max_size: 50
   # By default, files will be deleted as soon as the session will be finish.
   # You can set it true to disable deleting files.
   keep_forever: false
@@ -61,6 +61,9 @@ upload_file_settings:
     - "xlsx"
     - "pptx"
     - "zip"
+    - "mp4"
+    - "webm"
+    - "mp3"
 recorder_info:
   # this value should be same as recorder's copy_to_dir path
   recording_files_path: "/app/recording_files"
