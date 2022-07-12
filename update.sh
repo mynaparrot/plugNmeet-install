@@ -23,7 +23,7 @@ printf "\nupdating docker images\n"
 sleep 1
 docker-compose pull
 docker-compose up -d --remove-orphans
-docker image prune -f
+docker system prune -f -a --volumes
 
 ## client update
 # let's take backup first
