@@ -7,7 +7,7 @@ services:
     volumes:
       - ./redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: "redis-cli ping || kill 1"
       interval: 10s
       timeout: 1s
       retries: 5
@@ -18,7 +18,7 @@ services:
       MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
     network_mode: "host"
     healthcheck:
-      test: "mysql -u root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\""
+      test: "mysql -u root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\" || kill 1"
       interval: 10s
       timeout: 1s
       retries: 5
@@ -36,7 +36,7 @@ services:
     depends_on:
       - redis
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:7880 || exit 1
+      test: wget --no-verbose --tries=5 --spider http://localhost:7880 || kill 1
       interval: 20s
       timeout: 1s
       retries: 5
@@ -53,6 +53,11 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     depends_on:
       - redis
+    healthcheck:
+      test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || kill 1
+      interval: 20s
+      timeout: 1s
+      retries: 5
   plugnmeet:
     image: mynaparrot/plugnmeet-server
     restart: always
@@ -70,7 +75,7 @@ services:
       - redis
       - livekit
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
+      test: wget --no-verbose --tries=5 --spider http://localhost:8080 || kill 1
       interval: 20s
       timeout: 1s
       retries: 5
