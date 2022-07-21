@@ -83,10 +83,6 @@ main() {
   printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n"
 }
 
-random_key() {
-  tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null
-}
-
 install_docker() {
   apt -y install ca-certificates curl gnupg lsb-release
   OS=$(lsb_release -si)
@@ -105,6 +101,65 @@ install_docker() {
 
   apt update
   apt -y install docker-ce docker-ce-cli containerd.io docker-compose
+}
+
+install_haproxy() {
+  OS=$(lsb_release -si)
+
+  if [ "$OS" == "Ubuntu" ]; then
+    add-apt-repository ppa:vbernat/haproxy-2.4 -y
+  elif [ "$OS" == "Debian" ]; then
+    curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
+      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
+    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
+      http://haproxy.debian.net bullseye-backports-2.4 main \
+      >/etc/apt/sources.list.d/haproxy.list
+  fi
+
+  apt -y update && apt install -y haproxy
+  service haproxy stop
+
+  cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg_bk
+  mkdir -p /etc/haproxy/ssl
+
+  configure_lets_encrypt
+
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
+
+  wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
+  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
+
+  get_public_ip
+  sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
+
+  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
+  chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
+
+  service haproxy start
+}
+
+configure_lets_encrypt() {
+  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
+  service haproxy start
+
+  if ! which snap >/dev/null; then
+    apt install -y snapd
+  fi
+
+  snap install core
+  snap refresh core
+  snap install --classic certbot
+  ln -s /snap/bin/certbot /usr/bin/certbot
+
+  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
+    --non-interactive --agree-tos --email $EMAIL_ADDRESS \
+    --http-01-port=9080; then
+    display_error "Let's Encrypt SSL request did not succeed - exiting"
+  fi
+
+  service haproxy stop
+  rm /etc/haproxy/haproxy.cfg
 }
 
 prepare_server() {
@@ -168,6 +223,27 @@ prepare_etherpad() {
   sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
 }
 
+install_fonts() {
+  apt update && apt -y install --no-install-recommends \
+    fonts-arkpandora \
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-noto-core \
+    fonts-noto-mono \
+    fonts-noto-ui-core \
+    fonts-liberation \
+    fonts-dejavu \
+    fonts-dejavu-extra \
+    fonts-liberation \
+    fonts-liberation2 \
+    fonts-linuxlibertine \
+    fonts-sil-gentium \
+    fonts-sil-gentium-basic \
+    fontconfig
+}
+
 prepare_recorder() {
   ## prepare chrome
   curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
@@ -205,65 +281,6 @@ install_recorder() {
   rm recorder.zip
 }
 
-install_haproxy() {
-  OS=$(lsb_release -si)
-
-  if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-2.4 -y
-  elif [ "$OS" == "Debian" ]; then
-    curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
-      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
-    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net bullseye-backports-2.4 main \
-      >/etc/apt/sources.list.d/haproxy.list
-  fi
-
-  apt -y update && apt install -y haproxy
-  service haproxy stop
-
-  cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg_bk
-  mkdir -p /etc/haproxy/ssl
-
-  configure_lets_encrypt
-
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
-
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
-  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-
-  get_public_ip
-  sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
-
-  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-  chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-
-  service haproxy start
-}
-
-configure_lets_encrypt() {
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
-  service haproxy start
-
-  if ! which snap >/dev/null; then
-    apt install -y snapd
-  fi
-
-  snap install core
-  snap refresh core
-  snap install --classic certbot
-  ln -s /snap/bin/certbot /usr/bin/certbot
-
-  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
-    --non-interactive --agree-tos --email $EMAIL_ADDRESS \
-    --http-01-port=9080; then
-    display_error "Let's Encrypt SSL request did not succeed - exiting"
-  fi
-
-  service haproxy stop
-  rm /etc/haproxy/haproxy.cfg
-}
-
 can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
@@ -273,6 +290,10 @@ can_run() {
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
   clear
+}
+
+random_key() {
+  tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null
 }
 
 display_error() {
@@ -306,27 +327,6 @@ enable_ufw() {
   ufw allow 50000:60000/udp
 
   ufw --force enable
-}
-
-install_fonts() {
-  apt update && apt -y install --no-install-recommends \
-    fonts-arkpandora \
-    fonts-crosextra-carlito \
-    fonts-crosextra-caladea \
-    fonts-noto \
-    fonts-noto-cjk \
-    fonts-noto-core \
-    fonts-noto-mono \
-    fonts-noto-ui-core \
-    fonts-liberation \
-    fonts-dejavu \
-    fonts-dejavu-extra \
-    fonts-liberation \
-    fonts-liberation2 \
-    fonts-linuxlibertine \
-    fonts-sil-gentium \
-    fonts-sil-gentium-basic \
-    fontconfig
 }
 
 start_services() {
