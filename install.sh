@@ -126,6 +126,7 @@ prepare_server() {
 
   DB_ROOT_PASSWORD=$(random_key 20)
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
+  sed -i "s/SERVER_IP/$SERVER_IP/g" docker-compose.yaml
 
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" livekit.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
@@ -270,7 +271,7 @@ can_run() {
   if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git
+  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
   clear
 }
 
@@ -280,7 +281,9 @@ display_error() {
 }
 
 get_public_ip() {
-  SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
+  # best way to get ip using one of domain
+  # turn server's domain can't be behind proxy
+  SERVER_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
 }
 
 enable_ufw() {
