@@ -32,7 +32,7 @@ services:
     volumes:
       - .:/app
       - /etc/ssl/certs/:/etc/ssl/certs/:ro
-    command: --config "/app/livekit.yaml" --node-ip SERVER_IP
+    command: --config "/app/livekit.yaml" --node-ip PUBLIC_IP
     depends_on:
       - redis
     healthcheck:

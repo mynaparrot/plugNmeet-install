@@ -131,7 +131,7 @@ install_haproxy() {
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
 
   get_public_ip
-  sed -i "s/SERVER_IP/$SERVER_IP/g" /etc/haproxy/haproxy.cfg
+  sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -181,7 +181,7 @@ prepare_server() {
 
   DB_ROOT_PASSWORD=$(random_key 20)
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
-  sed -i "s/SERVER_IP/$SERVER_IP/g" docker-compose.yaml
+  sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" livekit.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
@@ -304,7 +304,8 @@ display_error() {
 get_public_ip() {
   # best way to get ip using one of domain
   # turn server's domain can't be behind proxy
-  SERVER_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+  MACHINE_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
 }
 
 enable_ufw() {
