@@ -270,7 +270,7 @@ can_run() {
   if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
+  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git
   clear
 }
 
@@ -280,9 +280,7 @@ display_error() {
 }
 
 get_public_ip() {
-  # best way to get ip using one of domain
-  # turn server's domain can't be behind proxy
-  SERVER_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+  SERVER_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
 }
 
 enable_ufw() {
