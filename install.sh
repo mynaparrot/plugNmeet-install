@@ -125,6 +125,8 @@ install_haproxy() {
 
 configure_lets_encrypt() {
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O $WORK_DIR/haproxy/haproxy.cfg
+  get_public_ip
+  sed -i "s/MACHINE_IP/$MACHINE_IP/g" $WORK_DIR/haproxy/haproxy.cfg
   docker-compose up -d haproxy
 
   if ! which snap >/dev/null; then
