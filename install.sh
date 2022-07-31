@@ -109,8 +109,8 @@ install_haproxy() {
   docker-compose build
   configure_lets_encrypt
   
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
   
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O $WORK_DIR/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" $WORK_DIR/haproxy/haproxy.cfg
