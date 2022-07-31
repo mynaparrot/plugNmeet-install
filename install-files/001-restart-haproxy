@@ -4,8 +4,6 @@
 iptables -I INPUT -p tcp -m multiport --dports 80,443 --syn -j DROP
 sleep 1
 
-cat /etc/letsencrypt/live/$(basename $RENEWED_LINEAGE)/fullchain.pem etc/letsencrypt/live/$(basename $RENEWED_LINEAGE)/privkey.pem  > /opt/plugNmeet/haproxy/ssl/$(basename $RENEWED_LINEAGE).pem
-
 cd /opt/plugNmeet
 docker-compose restart -t 0 haproxy
 

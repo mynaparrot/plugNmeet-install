@@ -1,14 +1,16 @@
 version: "3"
 services:
   haproxy:
-    image: haproxy:2.6
+    build:
+      context: ./haproxy
+      dockerfile: Dockerfile
+    image: haproxy
     restart: always
-    ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
+    network_mode: "host"
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
       - ./haproxy/ssl:/usr/local/etc/haproxy/ssl
+      - /etc/letsencrypt:/etc/letsencrypt:ro
   redis:
     image: redis:6
     restart: always
