@@ -3,7 +3,10 @@
 ## https://serverfault.com/a/580630/120096
 iptables -I INPUT -p tcp -m multiport --dports 80,443 --syn -j DROP
 sleep 1
-service haproxy restart
+
+cd /opt/plugNmeet
+docker-compose restart -t 0 haproxy
+
 iptables -D INPUT -p tcp -m multiport --dports 80,443 --syn -j DROP
 
 ## you can use other logics here too

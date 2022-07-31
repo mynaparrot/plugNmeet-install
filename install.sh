@@ -44,9 +44,9 @@ main() {
   if ! which docker-compose >/dev/null; then
     install_docker
   fi
-
-  install_haproxy
+  
   prepare_server
+  install_haproxy
   install_client
   prepare_etherpad
   install_fonts
@@ -99,49 +99,33 @@ install_docker() {
       $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
   fi
 
-  apt update
-  apt -y install docker-ce docker-ce-cli containerd.io docker-compose
+  apt update && apt -y install docker-ce docker-ce-cli containerd.io docker-compose
 }
 
 install_haproxy() {
-  OS=$(lsb_release -si)
-
-  if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-2.4 -y
-  elif [ "$OS" == "Debian" ]; then
-    curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
-      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
-    echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net bullseye-backports-2.4 main \
-      >/etc/apt/sources.list.d/haproxy.list
-  fi
-
-  apt -y update && apt install -y haproxy
-  service haproxy stop
-
-  cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg_bk
-  mkdir -p /etc/haproxy/ssl
+  mkdir -p $WORK_DIR/haproxy/ssl
 
   configure_lets_encrypt
 
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
+  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
 
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
-  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
+  wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O $WORK_DIR/haproxy/haproxy.cfg
+  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" $WORK_DIR/haproxy/haproxy.cfg
 
   get_public_ip
-  sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
+  sed -i "s/MACHINE_IP/$MACHINE_IP/g" $WORK_DIR/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-
-  service haproxy start
+  
+  openssl dhparam -dsaparam -out $WORK_DIR/haproxy/ssl/dhp-4096.pem 4096
+  docker-compose up -d haproxy
 }
 
 configure_lets_encrypt() {
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
-  service haproxy start
+  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O $WORK_DIR/haproxy/haproxy.cfg
+  docker-compose up -d haproxy
 
   if ! which snap >/dev/null; then
     apt install -y snapd
@@ -158,8 +142,8 @@ configure_lets_encrypt() {
     display_error "Let's Encrypt SSL request did not succeed - exiting"
   fi
 
-  service haproxy stop
-  rm /etc/haproxy/haproxy.cfg
+  docker-compose stop haproxy -t 2
+  rm $WORK_DIR/haproxy/haproxy.cfg
 }
 
 prepare_server() {
@@ -332,6 +316,15 @@ enable_ufw() {
 
 start_services() {
   # first start redis
+  printf "\nStarting haproxy..\n"
+  docker-compose up -d haproxy
+  # check if redis is up
+  while ! nc -z localhost 443; do
+    printf "."
+    sleep 1 # wait before check again
+  done
+    
+  # now start redis
   printf "\nStarting redis..\n"
   docker-compose up -d redis
   # check if redis is up
