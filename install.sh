@@ -104,28 +104,22 @@ install_docker() {
 
 install_haproxy() {
   mkdir -p $WORK_DIR/haproxy/ssl
-
   configure_lets_encrypt
-
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem $WORK_DIR/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
-
+  
+  cat /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem  > /opt/plugNmeet/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
+  
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O $WORK_DIR/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" $WORK_DIR/haproxy/haproxy.cfg
-
-  get_public_ip
   sed -i "s/MACHINE_IP/$MACHINE_IP/g" $WORK_DIR/haproxy/haproxy.cfg
 
-  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
-  chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
+  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/deploy/001-restart-haproxy
+  chmod +x /etc/letsencrypt/renewal-hooks/deploy/001-restart-haproxy
   
-  openssl dhparam -dsaparam -out $WORK_DIR/haproxy/ssl/dhp-4096.pem 4096
   docker-compose up -d haproxy
 }
 
 configure_lets_encrypt() {
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O $WORK_DIR/haproxy/haproxy.cfg
-  get_public_ip
   sed -i "s/MACHINE_IP/$MACHINE_IP/g" $WORK_DIR/haproxy/haproxy.cfg
   docker-compose up -d haproxy
 
@@ -144,11 +138,12 @@ configure_lets_encrypt() {
     display_error "Let's Encrypt SSL request did not succeed - exiting"
   fi
 
-  docker-compose stop haproxy -t 2
+  docker-compose stop -t 2 haproxy
   rm $WORK_DIR/haproxy/haproxy.cfg
 }
 
 prepare_server() {
+  get_public_ip
   wget ${CONFIG_DOWNLOAD_URL}/config.yaml -O config.yaml
   wget ${CONFIG_DOWNLOAD_URL}/livekit.yaml -O livekit.yaml
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
