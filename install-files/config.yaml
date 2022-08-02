@@ -21,6 +21,7 @@ client:
   prometheus:
     enable: false
     metrics_path: "/metrics"
+  proxy_header: "X-Forwarded-For"
 log_settings:
   log_file: "/app/log/plugNmeet.log"
   # maxsize of log file in MB
