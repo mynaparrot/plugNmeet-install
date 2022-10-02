@@ -92,5 +92,3 @@ shared_notepad:
       id: "node_01"
       host: "ETHERPAD_SERVER_DOMAIN"
       api_key: "ETHERPAD_API"
-lti_info:
-  v1_tool_url: https://PLUG_N_MEET_SERVER_DOMAIN/lti/v1
