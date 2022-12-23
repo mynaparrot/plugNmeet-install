@@ -280,7 +280,7 @@ install_recorder() {
 
   prepare_recorder
 
-  npm install --ignore-scripts --production -C recorder
+  npm install --ignore-scripts --omit=dev -C recorder
   rm recorder.zip
 }
 
