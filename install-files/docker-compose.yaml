@@ -16,6 +16,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
+      MYSQL_ROOT_HOST: '%'
     network_mode: "host"
     healthcheck:
       test: "mysql -u root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\" || kill 1"
