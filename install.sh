@@ -261,7 +261,7 @@ prepare_recorder() {
   echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
   ## prepare nodejs
-  curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 
   ## install require software
   apt -y update && apt -y install nodejs xvfb google-chrome-stable ffmpeg
