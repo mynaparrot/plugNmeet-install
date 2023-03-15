@@ -1,0 +1,23 @@
+api_key: LIVEKIT_API_KEY
+api_secret: LIVEKIT_SECRET
+ws_url: https://PLUG_N_MEET_SERVER_DOMAIN/livekit
+rtmp_port: 1936
+redis:
+  address: localhost:6379
+  username: ""
+  password: ""
+  db: 0
+#  use_tls: false
+#  To use sentinel remove the host key above and add the following
+#  sentinel_master_name: plugnmeet
+#  sentinel_addresses:
+#    - redis-sentinel-host-1:26379
+#    - redis-sentinel-host-2:26379
+#    - redis-sentinel-host-3:26379
+#  If you use a different set of credentials for sentinel add
+#  sentinel_username: user
+#  sentinel_password: pass
+
+# cpu costs for various Ingress types with their default values
+cpu_cost:
+  rtmp_cpu_cost: 2.0

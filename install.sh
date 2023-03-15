@@ -168,6 +168,7 @@ configure_lets_encrypt() {
 prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/config.yaml -O config.yaml
   wget ${CONFIG_DOWNLOAD_URL}/livekit.yaml -O livekit.yaml
+  wget ${CONFIG_DOWNLOAD_URL}/ingress.yaml -O ingress.yaml
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
 
   mkdir -p sql_dump
@@ -186,11 +187,18 @@ prepare_server() {
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
+  # livekit
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" livekit.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" livekit.yaml
 
+  # ingress
+  sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" ingress.yaml
+  sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" ingress.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" ingress.yaml
+
+  # plugNmeet
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
@@ -327,6 +335,7 @@ enable_ufw() {
   ufw allow 80/tcp
   ufw allow 443/tcp
   ufw allow 7881/tcp
+  ufw allow 1935/tcp # for ingres RTMP
   ufw allow 443/udp
   ufw allow 50000:60000/udp
 
