@@ -105,14 +105,15 @@ install_docker() {
 
 install_haproxy() {
   OS=$(lsb_release -si)
+  CODE_NAME=$(lsb_release -sc)
 
   if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-2.4 -y
+    add-apt-repository ppa:vbernat/haproxy-2.6 -y
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net bullseye-backports-2.4 main \
+      http://haproxy.debian.net ${CODE_NAME}-backports-2.6 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
