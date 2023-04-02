@@ -24,6 +24,8 @@ room:
   auto_create: false
 ingress:
   rtmp_base_url: rtmp://PLUG_N_MEET_SERVER_DOMAIN/live
+signal_relay:
+  enabled: true
 keys:
   LIVEKIT_API_KEY: LIVEKIT_SECRET
 webhook:

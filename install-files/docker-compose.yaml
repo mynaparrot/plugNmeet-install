@@ -54,6 +54,11 @@ services:
         condition: service_healthy
       livekit:
         condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=5 --spider http://localhost:8088 || kill 1
+      interval: 20s
+      timeout: 1s
+      retries: 5
   etherpad:
     image: mynaparrot/plugnmeet-etherpad
     restart: always

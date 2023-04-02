@@ -2,6 +2,7 @@ api_key: LIVEKIT_API_KEY
 api_secret: LIVEKIT_SECRET
 ws_url: https://PLUG_N_MEET_SERVER_DOMAIN/livekit
 rtmp_port: 1936
+health_port: 8088
 redis:
   address: localhost:6379
   username: ""
