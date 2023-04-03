@@ -1,4 +1,3 @@
-version: "3"
 services:
   redis:
     image: redis:6
@@ -35,8 +34,7 @@ services:
       - /etc/ssl/certs/:/etc/ssl/certs/:ro
     command: --config "/app/livekit.yaml" --node-ip PUBLIC_IP
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     healthcheck:
       test: wget --no-verbose --tries=5 --spider http://localhost:7880 || kill 1
       interval: 20s
@@ -50,10 +48,7 @@ services:
       - .:/app
     command: --config "/app/ingress.yaml"
     depends_on:
-      redis:
-        condition: service_healthy
-      livekit:
-        condition: service_healthy
+      - redis
     healthcheck:
       test: wget --no-verbose --tries=5 --spider http://localhost:8088 || kill 1
       interval: 20s
@@ -71,8 +66,7 @@ services:
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     healthcheck:
       test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || kill 1
       interval: 20s
@@ -91,12 +85,9 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     command: --config "/app/config.yaml"
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      livekit:
-        condition: service_healthy
+      - db
+      - redis
+      - livekit
     healthcheck:
       test: wget --no-verbose --tries=5 --spider http://localhost:8080 || kill 1
       interval: 20s
