@@ -175,6 +175,12 @@ install_mariadb() {
 	systemctl -q enable mariadb 2> /dev/null
 	systemctl start mariadb
 
+	# check if database is up
+  while ! nc -z localhost 3306; do
+    printf "."
+    sleep 1 # wait before check again
+  done
+
   DB_ROOT_PASSWORD=$(random_key 20)
   echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
   chmod 600 /root/.my.cnf
