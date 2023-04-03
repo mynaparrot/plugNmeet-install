@@ -229,6 +229,7 @@ prepare_server() {
 
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
+  get_public_ip
 
   sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
@@ -389,27 +390,11 @@ enable_ufw() {
 }
 
 start_services() {
-  # first start redis
-  printf "\nStarting redis..\n"
-  docker-compose up -d redis
-  # check if redis is up
-  while ! nc -z localhost 6379; do
-    printf "."
-    sleep 1 # wait before check again
-  done
-
-  # now start db & etherpad
-  printf "\nStarting db & etherpad..\n"
-  docker-compose up -d db
+  # start etherpad
+  printf "\nStarting etherpad..\n"
   docker-compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
-    printf "."
-    sleep 1 # wait before check again
-  done
-
-  # check if database is up
-  while ! nc -z localhost 3306; do
     printf "."
     sleep 1 # wait before check again
   done
