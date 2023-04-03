@@ -50,9 +50,9 @@ main() {
     install_docker
   fi
 
-  install_haproxy
   install_redis
   install_mariadb
+  install_haproxy
   prepare_server
   install_client
   prepare_etherpad
@@ -96,8 +96,7 @@ install_docker() {
   if [ "$OS" == "Ubuntu" ]; then
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo \
-      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-        ${CODE_NAME} stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu ${CODE_NAME} stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
     echo \
