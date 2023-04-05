@@ -12,6 +12,11 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
+MARIADB_VERSION="10.11"
+OS=$(lsb_release -si)
+CODE_NAME=$(lsb_release -cs)
+ARCH=$(dpkg --print-architecture)
+
 main() {
   can_run
 
@@ -45,6 +50,8 @@ main() {
     install_docker
   fi
 
+  install_redis
+  install_mariadb
   install_haproxy
   prepare_server
   install_client
@@ -85,18 +92,16 @@ main() {
 
 install_docker() {
   apt -y install ca-certificates curl gnupg lsb-release
-  OS=$(lsb_release -si)
 
   if [ "$OS" == "Ubuntu" ]; then
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu ${CODE_NAME} stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      ${CODE_NAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
   fi
 
   apt update
@@ -104,9 +109,6 @@ install_docker() {
 }
 
 install_haproxy() {
-  OS=$(lsb_release -si)
-  CODE_NAME=$(lsb_release -sc)
-
   if [ "$OS" == "Ubuntu" ]; then
     add-apt-repository ppa:vbernat/haproxy-2.6 -y
   elif [ "$OS" == "Debian" ]; then
@@ -127,7 +129,7 @@ install_haproxy() {
 
   ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
   ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
-  
+
   # generate the custom DH parameters
   openssl dhparam -out /etc/haproxy/dhparams-2048.pem 2048
 
@@ -141,6 +143,65 @@ install_haproxy() {
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
 
   service haproxy start
+}
+
+install_redis() {
+  curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg > /dev/null 2>&1
+  echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${CODE_NAME} main" | sudo tee /etc/apt/sources.list.d/redis.list
+
+  apt update && apt install -y redis
+}
+
+install_mariadb() {
+  version="ubuntu"
+  if [ "$OS" == "Debian" ]; then
+    version="debian"
+  fi
+
+  curl -s https://mariadb.org/mariadb_release_signing_key.asc | gpg --dearmor | tee /usr/share/keyrings/mariadb-keyring.gpg > /dev/null 2>&1
+
+  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/mariadb-keyring.gpg] https://dlm.mariadb.com/repo/mariadb-server/${MARIADB_VERSION}/repo/${version} ${CODE_NAME} main" > /etc/apt/sources.list.d/mariadb.list
+
+  apt update && DEBIAN_FRONTEND=noninteractive apt install -y mariadb-client mariadb-common mariadb-server
+
+  # Run mysql_install_db
+  mysql_install_db
+  # Remove symbolic link
+  rm -f /etc/mysql/my.cnf
+  # temporary use hestiacp recommended settings
+  wget https://raw.githubusercontent.com/hestiacp/hestiacp/main/install/deb/mysql/my-small.cnf -O /etc/mysql/my.cnf
+
+  update-rc.d mariadb defaults > /dev/null 2>&1
+	systemctl -q enable mariadb 2> /dev/null
+	systemctl restart mariadb
+
+	# check if database is up
+  while ! nc -z localhost 3306; do
+    printf "."
+    sleep 1 # wait before check again
+  done
+
+  DB_ROOT_PASSWORD=$(random_key 20)
+  echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
+  chmod 600 /root/.my.cnf
+
+  mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+
+  # Allow mysql access via socket for startup
+  mysql -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
+  # Disable anonymous users
+  mysql -e "DELETE FROM mysql.global_priv WHERE User='';"
+  # Drop test database
+  mysql -e "DROP DATABASE IF EXISTS test"
+  mysql -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
+  # Flush privileges
+  mysql -e "FLUSH PRIVILEGES;"
+
+  wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
+  mysql -u root < install.sql
+
+  DB_PLUGNMEET_PASSWORD=$(random_key 20)
+  mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
 }
 
 configure_lets_encrypt() {
@@ -172,20 +233,14 @@ prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/ingress.yaml -O ingress.yaml
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
 
-  mkdir -p sql_dump
-  mkdir -p redis-data
-  chmod 777 redis-data
-  wget ${SQL_DUMP_DOWNLOAD_URL} -O sql_dump/install.sql
-
   ## change livekit api & turn
   LIVEKIT_API_KEY=API$(random_key 11)
   LIVEKIT_SECRET=$(random_key 36)
 
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
+  get_public_ip
 
-  DB_ROOT_PASSWORD=$(random_key 20)
-  sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
   # livekit
@@ -205,7 +260,7 @@ prepare_server() {
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" config.yaml
-  sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" config.yaml
+  sed -i "s/DB_PLUGNMEET_PASSWORD/$DB_PLUGNMEET_PASSWORD/g" config.yaml
 
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
@@ -344,27 +399,11 @@ enable_ufw() {
 }
 
 start_services() {
-  # first start redis
-  printf "\nStarting redis..\n"
-  docker-compose up -d redis
-  # check if redis is up
-  while ! nc -z localhost 6379; do
-    printf "."
-    sleep 1 # wait before check again
-  done
-
-  # now start db & etherpad
-  printf "\nStarting db & etherpad..\n"
-  docker-compose up -d db
+  # start etherpad
+  printf "\nStarting etherpad..\n"
   docker-compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
-    printf "."
-    sleep 1 # wait before check again
-  done
-
-  # check if database is up
-  while ! nc -z localhost 3306; do
     printf "."
     sleep 1 # wait before check again
   done

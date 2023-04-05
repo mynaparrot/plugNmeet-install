@@ -59,10 +59,10 @@ redis_info:
 mysql_info:
   host: localhost
   port: 3306
-  username: "root"
-  password: "DB_ROOT_PASSWORD"
-  db: "plugnmeet"
-  prefix: "pnm_"
+  username: plugnmeet
+  password: DB_PLUGNMEET_PASSWORD
+  db: plugnmeet
+  prefix: pnm_
 upload_file_settings:
   path: "/app/upload"
   # file size in MB. Default 50MB

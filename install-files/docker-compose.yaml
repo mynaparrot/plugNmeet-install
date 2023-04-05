@@ -1,30 +1,4 @@
 services:
-  redis:
-    image: redis:6
-    restart: always
-    network_mode: "host"
-    volumes:
-      - ./redis-data:/data
-    healthcheck:
-      test: "redis-cli ping || kill 1"
-      interval: 10s
-      timeout: 1s
-      retries: 5
-  db:
-    image: mariadb:10.11
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: DB_ROOT_PASSWORD
-      MYSQL_ROOT_HOST: '%'
-    network_mode: "host"
-    healthcheck:
-      test: "mysql -u root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\" || kill 1"
-      interval: 10s
-      timeout: 1s
-      retries: 5
-    volumes:
-      - ./mariadb-data:/var/lib/mysql
-      - ./sql_dump/install.sql:/docker-entrypoint-initdb.d/install.sql
   livekit:
     image: livekit/livekit-server
     restart: always
@@ -33,9 +7,6 @@ services:
       - .:/app
       - /etc/ssl/certs/:/etc/ssl/certs/:ro
     command: --config "/app/livekit.yaml" --node-ip PUBLIC_IP
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: wget --no-verbose --tries=5 --spider http://localhost:7880 || kill 1
       interval: 20s
@@ -49,8 +20,6 @@ services:
       - .:/app
     command: --config "/app/ingress.yaml"
     depends_on:
-      redis:
-        condition: service_healthy
       livekit:
         condition: service_healthy
     healthcheck:
@@ -69,9 +38,6 @@ services:
       - /etc/fonts/:/etc/fonts/:ro
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || kill 1
       interval: 20s
@@ -90,10 +56,6 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     command: --config "/app/config.yaml"
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       livekit:
         condition: service_healthy
     healthcheck:
