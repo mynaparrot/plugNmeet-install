@@ -185,7 +185,7 @@ install_mariadb() {
   echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
   chmod 600 /root/.my.cnf
 
-  mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
   # Allow mysql access via socket for startup
   mysql -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   # Disable anonymous users
@@ -198,6 +198,9 @@ install_mariadb() {
 
   wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
   mysql -u root < install.sql
+
+  DB_PLUGNMEET_PASSWORD=$(random_key 20)
+  mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
 }
 
 configure_lets_encrypt() {
@@ -237,7 +240,7 @@ prepare_server() {
   PLUG_N_MEET_SECRET=$(random_key 36)
   get_public_ip
 
-  sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" docker-compose.yaml
+  #sed -i "s/DB_PLUGNMEET_PASSWORD/$DB_PLUGNMEET_PASSWORD/g" docker-compose.yaml
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
   # livekit
@@ -257,7 +260,7 @@ prepare_server() {
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" config.yaml
-  sed -i "s/DB_ROOT_PASSWORD/$DB_ROOT_PASSWORD/g" config.yaml
+  sed -i "s/DB_PLUGNMEET_PASSWORD/$DB_PLUGNMEET_PASSWORD/g" config.yaml
 
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
