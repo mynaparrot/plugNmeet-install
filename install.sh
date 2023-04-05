@@ -181,11 +181,12 @@ install_mariadb() {
     sleep 1 # wait before check again
   done
 
-  DB_ROOT_PASSWORD=$(random_key 20)
-  echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
-  chmod 600 /root/.my.cnf
-
-  mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  # We won't set room password. If needed then uncomment this lines
+  # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
+  # DB_ROOT_PASSWORD=$(random_key 20)
+  # echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
+  # chmod 600 /root/.my.cnf
+  # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
 
   # Allow mysql access via socket for startup
   mysql -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
