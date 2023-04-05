@@ -173,7 +173,7 @@ install_mariadb() {
 
   update-rc.d mariadb defaults > /dev/null 2>&1
 	systemctl -q enable mariadb 2> /dev/null
-	systemctl start mariadb
+	systemctl restart mariadb
 
 	# check if database is up
   while ! nc -z localhost 3306; do
@@ -185,7 +185,8 @@ install_mariadb() {
   echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
   chmod 600 /root/.my.cnf
 
-  mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+  mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+
   # Allow mysql access via socket for startup
   mysql -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   # Disable anonymous users
@@ -240,7 +241,6 @@ prepare_server() {
   PLUG_N_MEET_SECRET=$(random_key 36)
   get_public_ip
 
-  #sed -i "s/DB_PLUGNMEET_PASSWORD/$DB_PLUGNMEET_PASSWORD/g" docker-compose.yaml
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
   # livekit
