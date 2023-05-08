@@ -46,7 +46,7 @@ main() {
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
 
-  if ! which docker-compose >/dev/null; then
+  if ! which docker >/dev/null; then
     install_docker
   fi
 
@@ -105,7 +105,7 @@ install_docker() {
   fi
 
   apt update
-  apt -y install docker-ce docker-ce-cli containerd.io docker-compose
+  apt -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 }
 
 install_haproxy() {
@@ -402,7 +402,7 @@ enable_ufw() {
 start_services() {
   # start etherpad
   printf "\nStarting etherpad..\n"
-  docker-compose up -d etherpad
+  docker compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
     printf "."
@@ -411,8 +411,8 @@ start_services() {
 
   # now start livekit & plugnmeet-api
   printf "\nStarting livekit & plugNmeet..\n"
-  docker-compose up -d livekit
-  docker-compose up -d plugnmeet
+  docker compose up -d livekit
+  docker compose up -d plugnmeet
   # check if livekit is up
   while ! nc -z localhost 7880; do
     printf "."

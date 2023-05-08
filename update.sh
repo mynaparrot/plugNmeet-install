@@ -21,8 +21,8 @@ service plugnmeet stop
 ## https://stackoverflow.com/a/61362893/1281864
 printf "\nupdating docker images\n"
 sleep 1
-docker-compose pull
-docker-compose up -d --remove-orphans
+docker compose pull
+docker compose up -d --remove-orphans
 docker system prune -f -a --volumes
 
 ## client update
@@ -44,7 +44,7 @@ rm -rf client.zip
 
 # wait until plugNmeet api ready
 while ! nc -z localhost 8080; do
-  docker-compose logs --tail=1
+  docker compose logs --tail=1
   sleep 3 # wait before check again
 done
 
@@ -73,7 +73,7 @@ if [ -d "recorder" ]; then
 
   # make sure redis is up
   while ! nc -z localhost 6379; do
-    docker-compose logs --tail=1
+    docker compose logs --tail=1
     sleep 1 # wait before check again
   done
 
