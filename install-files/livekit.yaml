@@ -22,6 +22,11 @@ redis:
 #  sentinel_password: pass
 room:
   auto_create: false
+  enabled_codecs:
+    - mime: audio/opus
+    - mime: video/vp8
+    - mime: video/vp9
+    - mime: video/av1
 ingress:
   rtmp_base_url: rtmp://PLUG_N_MEET_SERVER_DOMAIN/live
 signal_relay:
