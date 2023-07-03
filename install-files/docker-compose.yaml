@@ -8,7 +8,7 @@ services:
       - /etc/ssl/certs/:/etc/ssl/certs/:ro
     command: --config "/app/livekit.yaml" --node-ip PUBLIC_IP
     healthcheck:
-      test: wget --no-verbose --tries=5 --spider http://localhost:7880 || kill 1
+      test: wget --no-verbose --tries=5 --spider http://localhost:7880 || exit 1
       interval: 20s
       timeout: 1s
       retries: 5
@@ -23,7 +23,7 @@ services:
       livekit:
         condition: service_healthy
     healthcheck:
-      test: wget --no-verbose --tries=5 --spider http://localhost:8088 || kill 1
+      test: wget --no-verbose --tries=5 --spider http://localhost:8088 || exit 1
       interval: 20s
       timeout: 1s
       retries: 5
@@ -39,7 +39,7 @@ services:
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     healthcheck:
-      test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || kill 1
+      test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || exit 1
       interval: 20s
       timeout: 1s
       retries: 5
@@ -59,7 +59,7 @@ services:
       livekit:
         condition: service_healthy
     healthcheck:
-      test: wget --no-verbose --tries=5 --spider http://localhost:8080 || kill 1
+      test: wget --no-verbose --tries=5 --spider http://localhost:8080 || exit 1
       interval: 20s
       timeout: 1s
       retries: 5
