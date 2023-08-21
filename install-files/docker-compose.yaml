@@ -39,7 +39,7 @@ services:
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     healthcheck:
-      test: curl -f --retry 5 --retry-delay 3 "http://localhost:9001/api" || exit 1
+      test: wget --no-verbose --tries=5 --spider "http://127.0.0.1:9001/api" || exit 1
       interval: 20s
       timeout: 1s
       retries: 5
