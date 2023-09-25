@@ -30,6 +30,7 @@ room:
     - mime: video/av1
 ingress:
   rtmp_base_url: rtmp://PLUG_N_MEET_SERVER_DOMAIN/live
+  whip_base_url: https://PLUG_N_MEET_SERVER_DOMAIN/whip
 signal_relay:
   enabled: true
 keys:
