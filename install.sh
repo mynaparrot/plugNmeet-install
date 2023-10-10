@@ -13,6 +13,7 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
 MARIADB_VERSION="10.11"
+NODEJS_VERSION="18"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
@@ -85,9 +86,6 @@ main() {
 
   printf "To test frontend: \n"
   printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
-
-  printf "\nFor further performance tuning follow: \n"
-  printf "https://docs.livekit.io/deploy/test-monitor#kernel-parameters\n\n"
 }
 
 install_docker() {
@@ -318,7 +316,8 @@ prepare_recorder() {
   echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
   ## prepare nodejs
-  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+  echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
   ## install require software
   apt -y update && apt -y install nodejs xvfb google-chrome-stable ffmpeg
@@ -357,6 +356,8 @@ can_run() {
 
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
+  ## make sure directory is exist
+  mkdir -p /usr/share/keyrings
   clear
 }
 
