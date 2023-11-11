@@ -33,6 +33,8 @@ ingress:
   whip_base_url: https://PLUG_N_MEET_SERVER_DOMAIN/whip
 signal_relay:
   enabled: true
+psrpc:
+  enabled: true
 keys:
   LIVEKIT_API_KEY: LIVEKIT_SECRET
 webhook:
