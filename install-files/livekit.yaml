@@ -24,6 +24,7 @@ room:
   auto_create: false
   enabled_codecs:
     - mime: audio/opus
+    - mime: audio/red
     - mime: video/h264
     - mime: video/vp8
     - mime: video/vp9
