@@ -100,6 +100,9 @@ shared_notepad:
       api_key: "ETHERPAD_API"
 azure_cognitive_services_speech:
   enabled: false
+  # The Maximum number of translation languages allows selecting. Default: 2
+  # The pricing will be different if allow more languages. Please check azure pricing.
+  max_num_tran_langs: 2
   subscription_keys:
     -
       id: "key_1"
