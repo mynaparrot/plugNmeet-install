@@ -148,6 +148,9 @@ install_redis() {
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${CODE_NAME} main" | sudo tee /etc/apt/sources.list.d/redis.list
 
   apt update && apt install -y redis
+
+  update-rc.d redis defaults > /dev/null 2>&1
+  systemctl -q enable redis 2> /dev/null
 }
 
 install_mariadb() {
