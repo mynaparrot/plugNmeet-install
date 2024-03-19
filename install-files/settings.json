@@ -342,7 +342,7 @@
    * The other effect will be that the logs will contain the real client's IP,
    * instead of the reverse proxy's IP.
    */
-  "trustProxy": "${TRUST_PROXY:false}",
+  "trustProxy": "${TRUST_PROXY:true}",
 
   /*
    * Settings controlling the session cookie issued by Etherpad.
