@@ -67,25 +67,25 @@ main() {
     enable_ufw
   fi
 
-  print "\nFinalizing setup..\n"
+  printf "\nFinalizing setup..\n"
   start_services
 
   clear
-  print "Installation completed!\n\n"
-  print "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
-  print "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
-  print "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
+  printf "Installation completed!\n\n"
+  printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
+  printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
+  printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
 
-  print "\n\nTo manage server: \n"
-  print "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
+  printf "\n\nTo manage server: \n"
+  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    print "\n\nTo manage recorder: \n"
-    print "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
+    printf "\n\nTo manage recorder: \n"
+    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
   fi
 
-  print "To test frontend: \n"
-  print "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
+  printf "To test frontend: \n"
+  printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
 }
 
 install_docker() {
