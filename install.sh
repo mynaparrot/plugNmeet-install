@@ -283,13 +283,15 @@ install_client() {
 prepare_etherpad() {
   mkdir -p etherpad
   wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
-  wget ${CONFIG_DOWNLOAD_URL}/APIKEY.txt -O etherpad/APIKEY.txt
 
-  ETHERPAD_API=$(random_key 80)
+  ETHERPAD_SECRET=$(random_key 40)
+  ETHERPAD_SERVER_DOMAIN="https://${PLUG_N_MEET_SERVER_DOMAIN}/etherpad"
 
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
+  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" config.yaml
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/$ETHERPAD_SERVER_DOMAIN/g" config.yaml
+
+  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" etherpad/settings.json
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/$ETHERPAD_SERVER_DOMAIN/g" etherpad/settings.json
 }
 
 install_fonts() {
