@@ -24,7 +24,7 @@ client:
   proxy_header: "X-Forwarded-For"
   copyright_conf:
     # if true then user will be able to change copyright info by API
-    allow_override: true
+    allow_override: false
     # if true then copyright text will display
     display: true
     # do not make the text longer, not all html tags are supported
