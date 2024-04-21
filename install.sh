@@ -67,25 +67,25 @@ main() {
     enable_ufw
   fi
 
-  printf "\nFinalizing setup..\n"
+  print "\nFinalizing setup..\n"
   start_services
 
   clear
-  printf "Installation completed!\n\n"
-  printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
-  printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
-  printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
+  print "Installation completed!\n\n"
+  print "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
+  print "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
+  print "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
 
-  printf "\n\nTo manage server: \n"
-  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
+  print "\n\nTo manage server: \n"
+  print "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\n\nTo manage recorder: \n"
-    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
+    print "\n\nTo manage recorder: \n"
+    print "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
   fi
 
-  printf "To test frontend: \n"
-  printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
+  print "To test frontend: \n"
+  print "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
 }
 
 install_docker() {
@@ -113,7 +113,7 @@ install_haproxy() {
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net ${CODE_NAME}-backports-2.6 main \
+      http://haproxy.debian.net "${CODE_NAME}"-backports-2.6 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
@@ -125,8 +125,8 @@ install_haproxy() {
 
   configure_lets_encrypt
 
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
+  ln -s /etc/letsencrypt/live/"${PLUG_N_MEET_SERVER_DOMAIN}"/fullchain.pem /etc/haproxy/ssl/"${PLUG_N_MEET_SERVER_DOMAIN}".pem
+  ln -s /etc/letsencrypt/live/"${PLUG_N_MEET_SERVER_DOMAIN}"/privkey.pem /etc/haproxy/ssl/"${PLUG_N_MEET_SERVER_DOMAIN}".pem.key
 
   # generate the custom DH parameters
   openssl dhparam -out /etc/haproxy/dhparams-2048.pem 2048
@@ -219,8 +219,8 @@ configure_lets_encrypt() {
   snap install --classic certbot
   ln -s /snap/bin/certbot /usr/bin/certbot
 
-  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
-    --non-interactive --agree-tos --email $EMAIL_ADDRESS \
+  if ! certbot certonly --standalone -d "${PLUG_N_MEET_SERVER_DOMAIN}" -d "${TURN_SERVER_DOMAIN}" \
+    --non-interactive --agree-tos --email "${EMAIL_ADDRESS}" \
     --http-01-port=9080; then
     display_error "Let's Encrypt SSL request did not succeed - exiting"
   fi
@@ -374,7 +374,7 @@ display_error() {
 get_public_ip() {
   # best way to get ip using one of domain
   # turn server's domain can't be behind proxy
-  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short "${TURN_SERVER_DOMAIN}" @resolver1.opendns.com)
   MACHINE_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
 }
 
@@ -387,9 +387,9 @@ enable_ufw() {
     apt-get install -y fail2ban
   fi
 
-  SSH_PORT=$(echo "$SSH_CLIENT" | cut -d' ' -f 3)
+  SSH_PORT=$(echo "${SSH_CLIENT}" | cut -d' ' -f 3)
 
-  ufw allow $SSH_PORT/tcp
+  ufw allow "${SSH_PORT}"/tcp
   ufw allow 22/tcp # for safety
   ufw allow 80/tcp
   ufw allow 443/tcp
