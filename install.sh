@@ -291,7 +291,9 @@ prepare_etherpad() {
   sed -i "s/ETHERPAD_SERVER_DOMAIN/$ETHERPAD_SERVER_DOMAIN/g" config.yaml
 
   sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" etherpad/settings.json
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/$ETHERPAD_SERVER_DOMAIN/g" etherpad/settings.json
+  # haproxy will remove path `/etherpad` during proxying
+  # so, here we'll use the main domain name only
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" etherpad/settings.json
 }
 
 install_fonts() {
@@ -374,7 +376,7 @@ display_error() {
 get_public_ip() {
   # best way to get ip using one of domain
   # turn server's domain can't be behind proxy
-  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short "${TURN_SERVER_DOMAIN}" @resolver1.opendns.com)
+  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short "${TURN_SERVER_DOMAIN}" "@resolver1.opendns.com")
   MACHINE_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
 }
 
