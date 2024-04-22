@@ -67,25 +67,25 @@ main() {
     enable_ufw
   fi
 
-  printf "\nFinalizing setup..\n"
+  printf "\\nFinalizing setup..\\n"
   start_services
 
   clear
-  printf "Installation completed!\n\n"
-  printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
-  printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
-  printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
+  printf "Installation completed!\\n\\n"
+  printf "plugNmeet server URL: %s\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}"
+  printf "plugNmeet API KEY: %s\\n" "${PLUG_N_MEET_API_KEY}"
+  printf "plugNmeet API SECRET: %s\\n" "${PLUG_N_MEET_SECRET}"
 
-  printf "\n\nTo manage server: \n"
-  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
+  printf "\\n\\nTo manage server: \\n"
+  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\\n"
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\n\nTo manage recorder: \n"
-    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
+    printf "\\n\\nTo manage recorder: \\n"
+    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \\n\\n"
   fi
 
-  printf "To test frontend: \n"
-  printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
+  printf "To test frontend: \\n"
+  printf "%s\\n\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html"
 }
 
 install_docker() {
@@ -185,7 +185,7 @@ install_mariadb() {
   # We won't set room password. If needed then uncomment this lines
   # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
   # DB_ROOT_PASSWORD=$(random_key 20)
-  # echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
+  # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
   # chmod 600 /root/.my.cnf
   # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
 
@@ -365,7 +365,7 @@ can_run() {
 }
 
 random_key() {
-  tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null
+  tr -dc A-Za-z0-9 </dev/urandom | dd bs="$1" count=1 2>/dev/null
 }
 
 display_error() {
@@ -405,7 +405,7 @@ enable_ufw() {
 
 start_services() {
   # start etherpad
-  printf "\nStarting etherpad..\n"
+  printf "\\nStarting etherpad..\\n"
   docker compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
@@ -414,7 +414,7 @@ start_services() {
   done
 
   # now start livekit & plugnmeet-api
-  printf "\nStarting livekit & plugNmeet..\n"
+  printf "\\nStarting livekit & plugNmeet..\\n"
   docker compose up -d livekit
   docker compose up -d plugnmeet
   # check if livekit is up
@@ -433,7 +433,7 @@ start_services() {
   systemctl restart plugnmeet
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\nStarting recorder..\n"
+    printf "\\nStarting recorder..\\n"
     # wait for plugnmeet
     while ! nc -z localhost 8080; do
       printf "."
