@@ -285,10 +285,9 @@ prepare_etherpad() {
   wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
 
   ETHERPAD_SECRET=$(random_key 40)
-  ETHERPAD_SERVER_DOMAIN="https://${PLUG_N_MEET_SERVER_DOMAIN}/etherpad"
 
   sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" config.yaml
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/$ETHERPAD_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
 
   sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" etherpad/settings.json
   # haproxy will remove path `/etherpad` during proxying
