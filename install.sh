@@ -149,8 +149,8 @@ install_redis() {
 
   apt update && apt install -y redis
 
-  update-rc.d redis defaults > /dev/null 2>&1
-  systemctl -q enable redis 2> /dev/null
+  update-rc.d redis-server defaults > /dev/null 2>&1
+  systemctl -q enable redis-server 2> /dev/null
 }
 
 install_mariadb() {
