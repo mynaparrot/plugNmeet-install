@@ -67,25 +67,25 @@ main() {
     enable_ufw
   fi
 
-  printf "\nFinalizing setup..\n"
+  printf "\\nFinalizing setup..\\n"
   start_services
 
   clear
-  printf "Installation completed!\n\n"
-  printf "plugNmeet server URL: https://${PLUG_N_MEET_SERVER_DOMAIN}\n"
-  printf "plugNmeet API KEY: ${PLUG_N_MEET_API_KEY}\n"
-  printf "plugNmeet API SECRET: ${PLUG_N_MEET_SECRET}\n"
+  printf "Installation completed!\\n\\n"
+  printf "plugNmeet server URL: %s\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}"
+  printf "plugNmeet API KEY: %s\\n" "${PLUG_N_MEET_API_KEY}"
+  printf "plugNmeet API SECRET: %s\\n" "${PLUG_N_MEET_SECRET}"
 
-  printf "\n\nTo manage server: \n"
-  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\n"
+  printf "\\n\\nTo manage server: \\n"
+  printf "systemctl stop plugnmeet or systemctl restart plugnmeet\\n"
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\n\nTo manage recorder: \n"
-    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \n\n"
+    printf "\\n\\nTo manage recorder: \\n"
+    printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \\n\\n"
   fi
 
-  printf "To test frontend: \n"
-  printf "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html\n\n"
+  printf "To test frontend: \\n"
+  printf "%s\\n\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html"
 }
 
 install_docker() {
@@ -113,7 +113,7 @@ install_haproxy() {
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net ${CODE_NAME}-backports-2.6 main \
+      http://haproxy.debian.net "${CODE_NAME}"-backports-2.6 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
@@ -125,8 +125,8 @@ install_haproxy() {
 
   configure_lets_encrypt
 
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/fullchain.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem
-  ln -s /etc/letsencrypt/live/${PLUG_N_MEET_SERVER_DOMAIN}/privkey.pem /etc/haproxy/ssl/${PLUG_N_MEET_SERVER_DOMAIN}.pem.key
+  ln -s /etc/letsencrypt/live/"${PLUG_N_MEET_SERVER_DOMAIN}"/fullchain.pem /etc/haproxy/ssl/"${PLUG_N_MEET_SERVER_DOMAIN}".pem
+  ln -s /etc/letsencrypt/live/"${PLUG_N_MEET_SERVER_DOMAIN}"/privkey.pem /etc/haproxy/ssl/"${PLUG_N_MEET_SERVER_DOMAIN}".pem.key
 
   # generate the custom DH parameters
   openssl dhparam -out /etc/haproxy/dhparams-2048.pem 2048
@@ -149,8 +149,8 @@ install_redis() {
 
   apt update && apt install -y redis
 
-  update-rc.d redis defaults > /dev/null 2>&1
-  systemctl -q enable redis 2> /dev/null
+  update-rc.d redis-server defaults > /dev/null 2>&1
+  systemctl -q enable redis-server 2> /dev/null
 }
 
 install_mariadb() {
@@ -185,7 +185,7 @@ install_mariadb() {
   # We won't set room password. If needed then uncomment this lines
   # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
   # DB_ROOT_PASSWORD=$(random_key 20)
-  # echo -e "[client]\npassword='${DB_ROOT_PASSWORD}'\n" > /root/.my.cnf
+  # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
   # chmod 600 /root/.my.cnf
   # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
 
@@ -219,8 +219,8 @@ configure_lets_encrypt() {
   snap install --classic certbot
   ln -s /snap/bin/certbot /usr/bin/certbot
 
-  if ! certbot certonly --standalone -d $PLUG_N_MEET_SERVER_DOMAIN -d $TURN_SERVER_DOMAIN \
-    --non-interactive --agree-tos --email $EMAIL_ADDRESS \
+  if ! certbot certonly --standalone -d "${PLUG_N_MEET_SERVER_DOMAIN}" -d "${TURN_SERVER_DOMAIN}" \
+    --non-interactive --agree-tos --email "${EMAIL_ADDRESS}" \
     --http-01-port=9080; then
     display_error "Let's Encrypt SSL request did not succeed - exiting"
   fi
@@ -283,13 +283,16 @@ install_client() {
 prepare_etherpad() {
   mkdir -p etherpad
   wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
-  wget ${CONFIG_DOWNLOAD_URL}/APIKEY.txt -O etherpad/APIKEY.txt
 
-  ETHERPAD_API=$(random_key 80)
+  ETHERPAD_SECRET=$(random_key 40)
 
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" etherpad/APIKEY.txt
-  sed -i "s/ETHERPAD_API/$ETHERPAD_API/g" config.yaml
+  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" config.yaml
   sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
+
+  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" etherpad/settings.json
+  # haproxy will remove path `/etherpad` during proxying
+  # so, here we'll use the main domain name only
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" etherpad/settings.json
 }
 
 install_fonts() {
@@ -361,7 +364,7 @@ can_run() {
 }
 
 random_key() {
-  tr -dc A-Za-z0-9 </dev/urandom | dd bs=$1 count=1 2>/dev/null
+  tr -dc A-Za-z0-9 </dev/urandom | dd bs="$1" count=1 2>/dev/null
 }
 
 display_error() {
@@ -372,7 +375,7 @@ display_error() {
 get_public_ip() {
   # best way to get ip using one of domain
   # turn server's domain can't be behind proxy
-  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short $TURN_SERVER_DOMAIN @resolver1.opendns.com)
+  PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short "${TURN_SERVER_DOMAIN}" "@resolver1.opendns.com")
   MACHINE_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
 }
 
@@ -385,9 +388,9 @@ enable_ufw() {
     apt-get install -y fail2ban
   fi
 
-  SSH_PORT=$(echo "$SSH_CLIENT" | cut -d' ' -f 3)
+  SSH_PORT=$(echo "${SSH_CLIENT}" | cut -d' ' -f 3)
 
-  ufw allow $SSH_PORT/tcp
+  ufw allow "${SSH_PORT}"/tcp
   ufw allow 22/tcp # for safety
   ufw allow 80/tcp
   ufw allow 443/tcp
@@ -401,7 +404,7 @@ enable_ufw() {
 
 start_services() {
   # start etherpad
-  printf "\nStarting etherpad..\n"
+  printf "\\nStarting etherpad..\\n"
   docker compose up -d etherpad
   # we'll check etherpad because it take most of the time
   while ! nc -z localhost 9001; do
@@ -410,7 +413,7 @@ start_services() {
   done
 
   # now start livekit & plugnmeet-api
-  printf "\nStarting livekit & plugNmeet..\n"
+  printf "\\nStarting livekit & plugNmeet..\\n"
   docker compose up -d livekit
   docker compose up -d plugnmeet
   # check if livekit is up
@@ -429,7 +432,7 @@ start_services() {
   systemctl restart plugnmeet
 
   if [ "$RECORDER_INSTALL" == "y" ]; then
-    printf "\nStarting recorder..\n"
+    printf "\\nStarting recorder..\\n"
     # wait for plugnmeet
     while ! nc -z localhost 8080; do
       printf "."

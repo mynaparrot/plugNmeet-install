@@ -640,5 +640,23 @@
   /*
    * Enable/Disable case-insensitive pad names.
    */
-  "lowerCasePadIds": "${LOWER_CASE_PAD_IDS:false}"
+  "lowerCasePadIds": "${LOWER_CASE_PAD_IDS:false}",
+  "sso": {
+    "issuer": "ETHERPAD_SERVER_DOMAIN",
+    "clients": [
+      {
+        "client_id": "plugNmeet",
+        "client_secret": "ETHERPAD_SECRET",
+        "grant_types": ["client_credentials"],
+        "redirect_uris": [],
+        "response_types": [],
+        "extraParams": [
+          {
+            "name": "admin",
+            "value": "true"
+          }
+        ]
+      }
+    ]
+  }
 }
