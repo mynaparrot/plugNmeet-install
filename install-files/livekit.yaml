@@ -29,6 +29,16 @@ room:
     - mime: video/vp8
     - mime: video/vp9
     - mime: video/av1
+logging:
+  # log level, valid values: debug, info, warn, error
+  level: warn
+  # log level for pion, default error
+  # pion_level: error
+  # when set to true, emit json fields
+  # json: false
+  # for production setups, enables sampling algorithm
+  # https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs
+  sample: true
 ingress:
   rtmp_base_url: rtmp://PLUG_N_MEET_SERVER_DOMAIN/live
   whip_base_url: https://PLUG_N_MEET_SERVER_DOMAIN/whip
