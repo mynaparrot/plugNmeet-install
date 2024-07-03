@@ -182,7 +182,7 @@ install_mariadb() {
     sleep 1 # wait before check again
   done
 
-  # We won't set room password. If needed then uncomment this lines
+  # We won't set root password. If needed then uncomment this lines
   # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
   # DB_ROOT_PASSWORD=$(random_key 20)
   # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
