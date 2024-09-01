@@ -53,6 +53,7 @@ main() {
 
   install_redis
   install_mariadb
+  prepare_nats
   install_haproxy
   prepare_server
   install_client
@@ -206,6 +207,24 @@ install_mariadb() {
   mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
 }
 
+prepare_nats() {
+  wget ${CONFIG_DOWNLOAD_URL}/nats_server.conf -O ./nats_server.conf
+  NATS_ACCOUNT="PNM"
+  NATS_USER="auth"
+  NATS_PASSWORD=$(random_key 30)
+
+  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
+  readarray -t array < <(printf '%b\n' "$OUTPUT")
+
+  NATS_CALLOUT_PUBLIC_KEY=${array[1]}
+  NATS_CALLOUT_PRIVATE_KEY=${array[0]}
+
+  sed -i "s/NATS_ACCOUNT/$NATS_ACCOUNT/g" nats_server.conf
+  sed -i "s/NATS_USER/$NATS_USER/g" nats_server.conf
+  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" nats_server.conf
+  sed -i "s/NATS_CALLOUT_PUBLIC_KEY/$NATS_CALLOUT_PUBLIC_KEY/g" nats_server.conf
+}
+
 configure_lets_encrypt() {
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
   service haproxy start
@@ -255,6 +274,12 @@ prepare_server() {
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" ingress.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" ingress.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" ingress.yaml
+
+  # nats
+  sed -i "s/NATS_ACCOUNT/$NATS_ACCOUNT/g" config.yaml
+  sed -i "s/NATS_USER/$NATS_USER/g" config.yaml
+  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" config.yaml
+  sed -i "s/NATS_CALLOUT_PRIVATE_KEY/$NATS_CALLOUT_PRIVATE_KEY/g" config.yaml
 
   # plugNmeet
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
@@ -343,6 +368,8 @@ install_recorder() {
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" recorder/config.yaml
   sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
+  sed -i "s/NATS_USER/$NATS_USER/g" recorder/config.yaml
+  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" recorder/config.yaml
 
   prepare_recorder
 
