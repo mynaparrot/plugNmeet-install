@@ -346,7 +346,7 @@ prepare_recorder() {
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
   ## install require software
-  apt -y update && apt -y install nodejs xvfb ffmpeg
+  apt -y update && apt -y install nodejs xvfb ffmpeg libnss3-dev
 }
 
 install_recorder() {
