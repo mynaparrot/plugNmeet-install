@@ -382,7 +382,12 @@ can_run() {
   if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
+  apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
+
+  if ! which nc >/dev/null; then
+    apt install -y --no-install-recommends netcat
+  fi
+
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
   clear
