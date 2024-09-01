@@ -51,6 +51,7 @@ main() {
     install_docker
   fi
 
+  get_public_ip
   install_redis
   install_mariadb
   prepare_nats
@@ -109,12 +110,12 @@ install_docker() {
 
 install_haproxy() {
   if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-2.8 -y
+    add-apt-repository ppa:vbernat/haproxy-3.0 -y
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net "${CODE_NAME}"-backports-2.8 main \
+      http://haproxy.debian.net "${CODE_NAME}"-backports-3.0 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
@@ -134,8 +135,6 @@ install_haproxy() {
 
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-
-  get_public_ip
   sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -260,7 +259,6 @@ prepare_server() {
 
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
-  get_public_ip
 
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
