@@ -65,8 +65,9 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     command: --config "/app/config.yaml"
     depends_on:
-      - nats
-      - livekit:
+      nats:
+        condition: service_started
+      livekit:
         condition: service_healthy
     healthcheck:
       test: wget --no-verbose --tries=5 --spider http://localhost:8080 || exit 1
