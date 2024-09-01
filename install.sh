@@ -210,7 +210,7 @@ prepare_nats() {
   wget ${CONFIG_DOWNLOAD_URL}/nats_server.conf -O ./nats_server.conf
   NATS_ACCOUNT="PNM"
   NATS_USER="auth"
-  NATS_PASSWORD=$(random_key 30)
+  NATS_PASSWORD=$(random_key 36)
 
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
   readarray -t array < <(printf '%b\n' "$OUTPUT")
