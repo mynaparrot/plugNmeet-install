@@ -21,7 +21,7 @@ redis:
 #  sentinel_username: user
 #  sentinel_password: pass
 room:
-  auto_create: false
+  auto_create: true
   enabled_codecs:
     - mime: audio/opus
     - mime: audio/red
