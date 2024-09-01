@@ -278,6 +278,7 @@ prepare_server() {
   sed -i "s/NATS_USER/$NATS_USER/g" config.yaml
   sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" config.yaml
   sed -i "s/NATS_CALLOUT_PRIVATE_KEY/$NATS_CALLOUT_PRIVATE_KEY/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
 
   # plugNmeet
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
