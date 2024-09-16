@@ -184,7 +184,7 @@ install_mariadb() {
 
   # We won't set root password. If needed then uncomment this lines
   # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
-  # DB_ROOT_PASSWORD=$(random_key 20)
+  # DB_ROOT_PASSWORD=$(random_key 36)
   # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
   # chmod 600 /root/.my.cnf
   # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
@@ -202,7 +202,7 @@ install_mariadb() {
   wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
   mysql -u root < install.sql
 
-  DB_PLUGNMEET_PASSWORD=$(random_key 20)
+  DB_PLUGNMEET_PASSWORD=$(random_key 36)
   mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
 }
 
