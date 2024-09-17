@@ -35,7 +35,7 @@ services:
       - "-config"
       - "/nats-server.conf"
     volumes:
-      - ./nats_server.conf:/nats-server.conf
+      - ./nats-server.conf:/nats-server.conf
       - ./nats-data:/data/jetstream
   etherpad:
     image: mynaparrot/plugnmeet-etherpad
