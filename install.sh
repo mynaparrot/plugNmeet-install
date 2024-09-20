@@ -373,7 +373,8 @@ install_recorder() {
 
   prepare_recorder
 
-  npm install --omit=dev -C recorder
+  npm i -g pnpm
+  pnpm install --prod -C recorder
   rm recorder.zip
 }
 
