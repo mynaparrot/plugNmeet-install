@@ -113,7 +113,9 @@ upload_file_settings:
   path: "/app/upload"
   # file size in MB. Default 50MB
   max_size: 50
-  # By default, files will be deleted as soon as the session will be finish.
+  # maximum file size in MB for whiteboard upload. Default 30MB
+  max_size_whiteboard_file: 30
+  # By default, files will be deleted as soon as the session has finished.
   # You can set it true to disable deleting files.
   keep_forever: false
   allowed_types:
