@@ -49,6 +49,9 @@ log_settings:
   maxbackups: 4
   # max age of log before rotate in days
   maxage: 2
+  # info, warn, error, fatal, debug or panic
+  # default: warn
+  log_level: "warn"
 livekit_info:
   host: "https://PLUG_N_MEET_SERVER_DOMAIN/livekit"
   api_key: LIVEKIT_API_KEY
