@@ -1,3 +1,6 @@
+## Note: for any id should contain valid characters only
+## otherwise will be problem with nats (https://docs.nats.io/nats-concepts/subjects#characters-allowed-and-recommended-for-subject-names)
+## Allowed characters: (a - z),(A - Z), (0 - 9), - and _
 client:
   port: 8080
   debug: false
@@ -8,16 +11,18 @@ client:
   # cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 36 | head -n 1
   api_key: PLUG_N_MEET_API_KEY
   secret: PLUG_N_MEET_SECRET
+  # value in minutes. Default 10 minutes. Client will renew token automatically
+  token_validity: 10m
   webhook_conf:
     # enable webhook. This will post response for different events
-    enable: false
+    enable: true
     # set url bellow. This will be use as global.
     # this is optional
     url: ""
     # During create room you can set custom hook URL too.
     # if you set enable_for_per_meeting: true
     # then extra post response will send in that address too
-    enable_for_per_meeting: false
+    enable_for_per_meeting: true
   prometheus:
     enable: false
     metrics_path: "/metrics"
@@ -30,6 +35,7 @@ client:
     # do not make the text longer, not all html tags are supported
     # 'b', 'i', 'em', 'strong', 'a'
     text: 'Powered by <a href="https://www.plugnmeet.org" target="_blank">plugNmeet</a>'
+  bbb_join_host: "https://PLUG_N_MEET_SERVER_DOMAIN"
 room_default_settings:
   max_duration: 0 # Duration in minutes. 0 = no limit
   max_participants: 0 # 0 = no limit
@@ -43,12 +49,13 @@ log_settings:
   maxbackups: 4
   # max age of log before rotate in days
   maxage: 2
+  # info, warn, error, fatal, debug or panic
+  # default: warn
+  log_level: "warn"
 livekit_info:
   host: "https://PLUG_N_MEET_SERVER_DOMAIN/livekit"
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
-  # value in minutes. Default 10 minutes. Client will renew token automatically
-  token_validity: 10m
 redis_info:
   host: localhost:6379
   username: ""
@@ -73,11 +80,45 @@ database_info:
   password: DB_PLUGNMEET_PASSWORD
   db: plugnmeet
   prefix: pnm_
+  # https://github.com/go-sql-driver/mysql?tab=readme-ov-file#charset
+  charset: "utf8mb4"
+  # https://github.com/go-sql-driver/mysql?tab=readme-ov-file#loc
+  loc: "UTC"
+  # default 4 minutes
+  conn_max_lifetime: 4m
+  # default 10 connections
+  max_open_conns: 10
+nats_info:
+  nats_urls:
+    - "nats://localhost:4222"
+  # nats websocket will be required for the pnm client to connect
+  # if the pnm client can't connect with this URL then user won't be able to join
+  nats_ws_urls:
+    - "https://PLUG_N_MEET_SERVER_DOMAIN/ws"
+  account: NATS_ACCOUNT
+  user: NATS_USER
+  password: NATS_PASSWORD
+  auth_callout_issuer_private: NATS_CALLOUT_PRIVATE_KEY
+  num_replicas: 1 # 1,3,or 5
+  subjects:
+    system_api_worker: "sysApiWorker"
+    system_js_worker: "sysJsWorker"
+    system_public: "sysPublic"
+    system_private: "sysPrivate"
+    chat: "chat"
+    whiteboard: "whiteboard"
+    # to exchange data of pnm client with each other
+    data_channel: "dataChannel"
+  recorder:
+    recorder_channel: "recorderChannel"
+    recorder_info_kv: "pnm-recorderInfo"
 upload_file_settings:
   path: "/app/upload"
   # file size in MB. Default 50MB
   max_size: 50
-  # By default, files will be deleted as soon as the session will be finish.
+  # maximum file size in MB for whiteboard upload. Default 30MB
+  max_size_whiteboard_file: 30
+  # By default, files will be deleted as soon as the session has finished.
   # You can set it true to disable deleting files.
   keep_forever: false
   allowed_types:
@@ -105,6 +146,7 @@ shared_notepad:
   # the value of id should be unique
   etherpad_hosts:
     -
+      # please check the note from the top of this file
       id: "node_01"
       host: "ETHERPAD_SERVER_DOMAIN"
       client_id: "plugNmeet"
@@ -116,6 +158,7 @@ azure_cognitive_services_speech:
   max_num_tran_langs: 2
   subscription_keys:
     -
+      # please check the note from the top of this file
       id: "key_1"
       # https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-text-to-speech?pivots=programming-language-go&tabs=linux%2Cterminal#prerequisites
       subscription_key: "your_key_here"

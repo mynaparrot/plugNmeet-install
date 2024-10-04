@@ -68,7 +68,8 @@ if [ -d "recorder" ]; then
   unzip -o recorder.zip
 
   cp -f recorder_bk/config.yaml recorder/config.yaml
-  npm install --omit=dev -C recorder
+  npm i -g pnpm
+  pnpm install --prod -C recorder
   rm -rf recorder.zip
 
   # make sure redis is up

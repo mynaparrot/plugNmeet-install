@@ -12,7 +12,7 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
-MARIADB_VERSION="10.11"
+MARIADB_VERSION="11.4"
 NODEJS_VERSION="20"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
@@ -51,8 +51,10 @@ main() {
     install_docker
   fi
 
+  get_public_ip
   install_redis
   install_mariadb
+  prepare_nats
   install_haproxy
   prepare_server
   install_client
@@ -108,12 +110,12 @@ install_docker() {
 
 install_haproxy() {
   if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-2.6 -y
+    add-apt-repository ppa:vbernat/haproxy-3.0 -y
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net "${CODE_NAME}"-backports-2.6 main \
+      http://haproxy.debian.net "${CODE_NAME}"-backports-3.0 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
@@ -133,8 +135,6 @@ install_haproxy() {
 
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-
-  get_public_ip
   sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
 
   wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -184,7 +184,7 @@ install_mariadb() {
 
   # We won't set root password. If needed then uncomment this lines
   # https://mariadb.com/kb/en/authentication-from-mariadb-104/#overview
-  # DB_ROOT_PASSWORD=$(random_key 20)
+  # DB_ROOT_PASSWORD=$(random_key 36)
   # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
   # chmod 600 /root/.my.cnf
   # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
@@ -202,8 +202,27 @@ install_mariadb() {
   wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
   mysql -u root < install.sql
 
-  DB_PLUGNMEET_PASSWORD=$(random_key 20)
+  DB_PLUGNMEET_PASSWORD=$(random_key 36)
   mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
+}
+
+prepare_nats() {
+  wget ${CONFIG_DOWNLOAD_URL}/nats_server.conf -O ./nats_server.conf
+  NATS_ACCOUNT="PNM"
+  NATS_USER="auth"
+  NATS_PASSWORD=$(random_key 36)
+  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "$NATS_PASSWORD")
+
+  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
+  readarray -t array < <(printf '%b\n' "$OUTPUT")
+
+  NATS_CALLOUT_PUBLIC_KEY=${array[1]}
+  NATS_CALLOUT_PRIVATE_KEY=${array[0]}
+
+  sed -i "s/_NATS_ACCOUNT_/$NATS_ACCOUNT/g" nats_server.conf
+  sed -i "s/_NATS_USER_/$NATS_USER/g" nats_server.conf
+  sed -i "s/_NATS_PASSWORD_CRYPT_/$NATS_PASSWORD_CRYPT/g" nats_server.conf
+  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/$NATS_CALLOUT_PUBLIC_KEY/g" nats_server.conf
 }
 
 configure_lets_encrypt() {
@@ -241,7 +260,6 @@ prepare_server() {
 
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
-  get_public_ip
 
   sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
 
@@ -255,6 +273,13 @@ prepare_server() {
   sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" ingress.yaml
   sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" ingress.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" ingress.yaml
+
+  # nats
+  sed -i "s/NATS_ACCOUNT/$NATS_ACCOUNT/g" config.yaml
+  sed -i "s/NATS_USER/$NATS_USER/g" config.yaml
+  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" config.yaml
+  sed -i "s/NATS_CALLOUT_PRIVATE_KEY/$NATS_CALLOUT_PRIVATE_KEY/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
 
   # plugNmeet
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
@@ -322,7 +347,7 @@ prepare_recorder() {
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
   ## install require software
-  apt -y update && apt -y install nodejs xvfb ffmpeg
+  apt -y update && apt -y install nodejs xvfb ffmpeg libnss3-dev
 }
 
 install_recorder() {
@@ -343,10 +368,13 @@ install_recorder() {
   sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" recorder/config.yaml
   sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
+  sed -i "s/NATS_USER/$NATS_USER/g" recorder/config.yaml
+  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" recorder/config.yaml
 
   prepare_recorder
 
-  npm install --omit=dev -C recorder
+  npm i -g pnpm
+  pnpm install --prod -C recorder
   rm recorder.zip
 }
 
@@ -357,7 +385,12 @@ can_run() {
   if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools netcat git dnsutils
+  apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
+
+  if ! which nc >/dev/null; then
+    apt install -y --no-install-recommends netcat
+  fi
+
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
   clear

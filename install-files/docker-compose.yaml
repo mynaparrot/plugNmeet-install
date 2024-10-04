@@ -27,6 +27,16 @@ services:
       interval: 20s
       timeout: 1s
       retries: 5
+  nats:
+    image: nats:alpine
+    restart: always
+    network_mode: "host"
+    command:
+      - "-config"
+      - "/nats-server.conf"
+    volumes:
+      - ./nats-server.conf:/nats-server.conf
+      - ./nats-data:/data/jetstream
   etherpad:
     image: mynaparrot/plugnmeet-etherpad
     restart: always
@@ -55,6 +65,8 @@ services:
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
     command: --config "/app/config.yaml"
     depends_on:
+      nats:
+        condition: service_started
       livekit:
         condition: service_healthy
     healthcheck:
