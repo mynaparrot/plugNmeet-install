@@ -166,7 +166,8 @@ install_mariadb() {
   apt update && DEBIAN_FRONTEND=noninteractive apt install -y mariadb-client mariadb-common mariadb-server
 
   # Run mysql_install_db
-  mysql_install_db
+  mariadb-install-db
+  mariadb-upgrade
   # Remove symbolic link
   rm -f /etc/mysql/my.cnf
   # temporary use hestiacp recommended settings
@@ -187,27 +188,27 @@ install_mariadb() {
   # DB_ROOT_PASSWORD=$(random_key 36)
   # echo -e "[client]\\npassword='${DB_ROOT_PASSWORD}'\\n" > /root/.my.cnf
   # chmod 600 /root/.my.cnf
-  # mysql -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
+  # mariadb -uroot -e "SET password = password('${DB_ROOT_PASSWORD}'); FLUSH PRIVILEGES;"
 
   # Allow mysql access via socket for startup
-  mysql -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
+  mariadb -e "UPDATE mysql.global_priv SET priv=json_set(priv, '$.password_last_changed', UNIX_TIMESTAMP(), '$.plugin', 'mysql_native_password', '$.authentication_string', 'invalid', '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   # Disable anonymous users
-  mysql -e "DELETE FROM mysql.global_priv WHERE User='';"
+  mariadb -e "DELETE FROM mysql.global_priv WHERE User='';"
   # Drop test database
-  mysql -e "DROP DATABASE IF EXISTS test"
-  mysql -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
+  mariadb -e "DROP DATABASE IF EXISTS test"
+  mariadb -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'"
   # Flush privileges
-  mysql -e "FLUSH PRIVILEGES;"
+  mariadb -e "FLUSH PRIVILEGES;"
 
   wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
-  mysql -u root < install.sql
+  mariadb -u root < install.sql
 
   DB_PLUGNMEET_PASSWORD=$(random_key 36)
-  mysql -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
+  mariadb -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
 }
 
 prepare_nats() {
-  wget ${CONFIG_DOWNLOAD_URL}/nats_server.conf -O ./nats_server.conf
+  wget ${CONFIG_DOWNLOAD_URL}/nats-server.conf -O ./nats-server.conf
   NATS_ACCOUNT="PNM"
   NATS_USER="auth"
   NATS_PASSWORD=$(random_key 36)
@@ -219,10 +220,10 @@ prepare_nats() {
   NATS_CALLOUT_PUBLIC_KEY=${array[1]}
   NATS_CALLOUT_PRIVATE_KEY=${array[0]}
 
-  sed -i "s/_NATS_ACCOUNT_/$NATS_ACCOUNT/g" nats_server.conf
-  sed -i "s/_NATS_USER_/$NATS_USER/g" nats_server.conf
-  sed -i "s/_NATS_PASSWORD_CRYPT_/$NATS_PASSWORD_CRYPT/g" nats_server.conf
-  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/$NATS_CALLOUT_PUBLIC_KEY/g" nats_server.conf
+  sed -i "s/_NATS_ACCOUNT_/$NATS_ACCOUNT/g" nats-server.conf
+  sed -i "s/_NATS_USER_/$NATS_USER/g" nats-server.conf
+  sed -i "s/_NATS_PASSWORD_CRYPT_/$NATS_PASSWORD_CRYPT/g" nats-server.conf
+  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/$NATS_CALLOUT_PUBLIC_KEY/g" nats-server.conf
 }
 
 configure_lets_encrypt() {
