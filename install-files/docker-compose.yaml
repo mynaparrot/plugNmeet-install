@@ -28,7 +28,7 @@ services:
       timeout: 1s
       retries: 5
   nats:
-    image: nats:alpine
+    image: nats:2.10-alpine
     restart: always
     network_mode: "host"
     command:
