@@ -212,7 +212,7 @@ prepare_nats() {
   NATS_ACCOUNT="PNM"
   NATS_USER="auth"
   NATS_PASSWORD=$(random_key 36)
-  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "$NATS_PASSWORD")
+  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "$NATS_PASSWORD" | tr -d '\r')
 
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
   readarray -t array < <(printf '%b\n' "$OUTPUT")
@@ -222,7 +222,7 @@ prepare_nats() {
 
   sed -i "s/_NATS_ACCOUNT_/$NATS_ACCOUNT/g" nats-server.conf
   sed -i "s/_NATS_USER_/$NATS_USER/g" nats-server.conf
-  sed -i "s/_NATS_PASSWORD_CRYPT_/$NATS_PASSWORD_CRYPT/g" nats-server.conf
+  sed -i "s|_NATS_PASSWORD_CRYPT_|$NATS_PASSWORD_CRYPT|g" nats-server.conf
   sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/$NATS_CALLOUT_PUBLIC_KEY/g" nats-server.conf
 }
 
