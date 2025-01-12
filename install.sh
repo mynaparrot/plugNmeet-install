@@ -13,7 +13,7 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
 MARIADB_VERSION="11.4"
-NODEJS_VERSION="20"
+NODEJS_VERSION="22"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
@@ -343,12 +343,16 @@ install_fonts() {
 }
 
 prepare_recorder() {
+  ## prepare chrome
+  curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
+  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
+
   ## prepare nodejs
   curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
   ## install require software
-  apt -y update && apt -y install nodejs xvfb ffmpeg libnss3-dev
+  apt -y update && apt -y install nodejs xvfb ffmpeg google-chrome-stable
 }
 
 install_recorder() {
