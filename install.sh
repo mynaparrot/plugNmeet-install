@@ -7,13 +7,12 @@ CONFIG_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-inst
 
 ## https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip
 CLIENT_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip"
-RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download/recorder.zip"
+RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download"
 
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
 MARIADB_VERSION="11.4"
-NODEJS_VERSION="22"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
@@ -347,26 +346,20 @@ prepare_recorder() {
   curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
-  ## prepare nodejs
-  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
-  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
   ## install require software
-  apt -y update && apt -y install nodejs xvfb ffmpeg google-chrome-stable
+  apt -y update && apt -y install pulseaudio ffmpeg xvfb google-chrome-stable
 }
 
 install_recorder() {
   wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder.service -O /etc/systemd/system/plugnmeet-recorder.service
-  wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@main.service -O /etc/systemd/system/plugnmeet-recorder@main.service
-  wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@websocket.service -O /etc/systemd/system/plugnmeet-recorder@websocket.service
   systemctl daemon-reload
   systemctl enable plugnmeet-recorder
-  systemctl enable plugnmeet-recorder@main
-  systemctl enable plugnmeet-recorder@websocket
 
-  wget $RECORDER_DOWNLOAD_URL -O recorder.zip
+  FILENAME="plugnmeet-recorder-linux-${ARCH}"
+  wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder.zip
   unzip recorder.zip
   cp recorder/config_sample.yaml recorder/config.yaml
+  mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
 
   WEBSOCKET_AUTH_TOKEN=$(random_key 10)
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\"/g" recorder/config.yaml
@@ -377,9 +370,6 @@ install_recorder() {
   sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" recorder/config.yaml
 
   prepare_recorder
-
-  npm i -g pnpm
-  pnpm install --prod -C recorder
   rm recorder.zip
 }
 

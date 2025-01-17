@@ -1,12 +1,16 @@
 [Unit]
 Description=plugNmeet recorder
+Requires=network-online.target
 After=network-online.target
-Wants=network-online.target
 
 [Service]
-Type=oneshot
-ExecStart=/bin/true
-RemainAfterExit=yes
+WorkingDirectory=/opt/plugNmeet/recorder
+ExecStartPre=/usr/bin/pulseaudio --start --verbose
+ExecStart=/opt/plugNmeet/recorder/plugnmeet-recorder
+ExecStopPost=/usr/bin/rm -rf /tmp/.X* /var/run/pulse /var/lib/pulse /root/.config/pulse /root/.cache/xdgr/pulse
+TimeoutStartSec=0
+Restart=always
+SyslogIdentifier=plugNmeet-recorder
 
 [Install]
 WantedBy=multi-user.target
