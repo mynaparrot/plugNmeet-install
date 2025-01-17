@@ -3,10 +3,11 @@
 if [ $EUID != 0 ]; then echo "You must run this script as root."; fi
 
 WORK_DIR=/opt/plugNmeet
+ARCH=$(dpkg --print-architecture)
 
 ## https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip
 CLIENT_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip"
-RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download/recorder.zip"
+RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download"
 
 if [ ! -d "$WORK_DIR" ]; then
   echo "Didn't find working directory. exiting.."
@@ -64,13 +65,11 @@ if [ -d "recorder" ]; then
 
   # take backup
   mv -f recorder recorder_bk
-  wget $RECORDER_DOWNLOAD_URL -O recorder.zip
-  unzip -o recorder.zip
-
+  FILENAME="plugnmeet-recorder-linux-${ARCH}"
+  wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder.zip
+  unzip recorder.zip && rm recorder.zip
+  mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
   cp -f recorder_bk/config.yaml recorder/config.yaml
-  npm i -g pnpm
-  pnpm install --prod -C recorder
-  rm -rf recorder.zip
 
   # make sure redis is up
   while ! nc -z localhost 6379; do
