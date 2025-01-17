@@ -2,14 +2,17 @@
 Description=plugNmeet service
 Requires=docker.service
 After=docker.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
 
 [Service]
 WorkingDirectory=/opt/plugNmeet
 ExecStartPre=/usr/bin/docker compose down
 ExecStart=/usr/bin/docker compose up
 ExecStop=/usr/bin/docker compose down
-TimeoutStartSec=0
+TimeoutStartSec=3
 Restart=always
+RestartSec=10
 SyslogIdentifier=plugNmeet
 
 [Install]
