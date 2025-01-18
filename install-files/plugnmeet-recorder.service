@@ -7,7 +7,7 @@ StartLimitBurst=3
 
 [Service]
 WorkingDirectory=/opt/plugNmeet/recorder
-ExecStartPre=/usr/bin/pulseaudio --start -D --exit-idle-time=-1
+ExecStartPre=/usr/bin/pulseaudio -D --exit-idle-time=-1
 ExecStart=/opt/plugNmeet/recorder/plugnmeet-recorder
 ExecStopPost=/usr/bin/rm -rf /tmp/.X* /var/run/pulse /var/lib/pulse /root/.config/pulse /root/.cache/xdgr/pulse
 TimeoutStartSec=3
