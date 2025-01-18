@@ -58,24 +58,14 @@ if [ -d "recorder" ]; then
   sleep 1
   service plugnmeet-recorder stop
 
-  # remove previous backup
-  if [ -d "recorder_bk" ]; then
-    rm -rf recorder_bk
-  fi
-
   # take backup
-  mv -f recorder recorder_bk
   FILENAME="plugnmeet-recorder-linux-${ARCH}"
-  wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder.zip
-  unzip recorder.zip && rm recorder.zip
-  mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
-  cp -f recorder_bk/config.yaml recorder/config.yaml
+  wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder_new.zip
+  unzip recorder_new.zip && rm recorder_new.zip
 
-  # make sure redis is up
-  while ! nc -z localhost 6379; do
-    docker compose logs --tail=1
-    sleep 1 # wait before check again
-  done
+  rm -f recorder/plugnmeet-recorder
+  cp -f "recorder_new/${FILENAME}" recorder/plugnmeet-recorder
+  rm -rf recorder_new
 
   service plugnmeet-recorder start
 fi
