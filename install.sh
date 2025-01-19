@@ -356,7 +356,7 @@ install_recorder() {
 
   FILENAME="plugnmeet-recorder-linux-${ARCH}"
   wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder.zip
-  unzip recorder.zip && rm recorder.zip
+  unzip recorder.zip -d recorder && rm recorder.zip
   cp recorder/config_sample.yaml recorder/config.yaml
   mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
 

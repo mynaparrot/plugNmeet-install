@@ -61,7 +61,7 @@ if [ -d "recorder" ]; then
   # take backup
   FILENAME="plugnmeet-recorder-linux-${ARCH}"
   wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder_new.zip
-  unzip recorder_new.zip && rm recorder_new.zip
+  unzip recorder_new.zip -d recorder_new && rm recorder_new.zip
 
   rm -f recorder/plugnmeet-recorder
   cp -f "recorder_new/${FILENAME}" recorder/plugnmeet-recorder
