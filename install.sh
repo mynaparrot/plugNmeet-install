@@ -7,13 +7,12 @@ CONFIG_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-inst
 
 ## https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip
 CLIENT_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-client/releases/latest/download/client.zip"
-RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download/recorder.zip"
+RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases/latest/download"
 
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
 MARIADB_VERSION="11.4"
-NODEJS_VERSION="22"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
@@ -23,13 +22,13 @@ main() {
 
   PLUG_N_MEET_SERVER_DOMAIN=
   while [[ $PLUG_N_MEET_SERVER_DOMAIN == "" ]]; do
-    echo -n "Please enter plugNmeet server domain (exmple: plugnmeet.example.com): "
+    echo -n "Please enter plugNmeet server domain (example: plugnmeet.example.com): "
     read -r PLUG_N_MEET_SERVER_DOMAIN
   done
 
   TURN_SERVER_DOMAIN=
   while [[ $TURN_SERVER_DOMAIN == "" ]]; do
-    echo -n "Please enter turn server domain (exmple: turn.example.com): "
+    echo -n "Please enter turn server domain (example: turn.example.com): "
     read -r TURN_SERVER_DOMAIN
   done
 
@@ -61,11 +60,11 @@ main() {
   prepare_etherpad
   install_fonts
 
-  if [ "$RECORDER_INSTALL" == "y" ]; then
+  if [ "${RECORDER_INSTALL}" == "y" ]; then
     install_recorder
   fi
 
-  if [ "$CONFIGURE_UFW" == "y" ]; then
+  if [ "${CONFIGURE_UFW}" == "y" ]; then
     enable_ufw
   fi
 
@@ -81,7 +80,7 @@ main() {
   printf "\\n\\nTo manage server: \\n"
   printf "systemctl stop plugnmeet or systemctl restart plugnmeet\\n"
 
-  if [ "$RECORDER_INSTALL" == "y" ]; then
+  if [ "${RECORDER_INSTALL}" == "y" ]; then
     printf "\\n\\nTo manage recorder: \\n"
     printf "systemctl stop plugnmeet-recorder or systemctl restart plugnmeet-recorder \\n\\n"
   fi
@@ -137,10 +136,33 @@ install_haproxy() {
   sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
   sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
 
-  wget ${CONFIG_DOWNLOAD_URL}/001-restart-haproxy -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
+  wget "${CONFIG_DOWNLOAD_URL}/001-restart-haproxy" -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
 
   service haproxy start
+}
+
+configure_lets_encrypt() {
+  wget "${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg" -O /etc/haproxy/haproxy.cfg
+  service haproxy start
+
+  if ! which snap >/dev/null; then
+    apt install -y snapd
+  fi
+
+  snap install core
+  snap refresh core
+  snap install --classic certbot
+  ln -s /snap/bin/certbot /usr/bin/certbot
+
+  if ! certbot certonly --standalone -d "${PLUG_N_MEET_SERVER_DOMAIN}" -d "${TURN_SERVER_DOMAIN}" \
+    --non-interactive --agree-tos --email "${EMAIL_ADDRESS}" \
+    --http-01-port=9080; then
+    display_error "Let's Encrypt SSL request did not succeed - exiting"
+  fi
+
+  service haproxy stop
+  rm /etc/haproxy/haproxy.cfg
 }
 
 install_redis() {
@@ -202,6 +224,7 @@ install_mariadb() {
 
   wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
   mariadb -u root < install.sql
+  rm install.sql
 
   DB_PLUGNMEET_PASSWORD=$(random_key 36)
   mariadb -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"
@@ -212,41 +235,18 @@ prepare_nats() {
   NATS_ACCOUNT="PNM"
   NATS_USER="auth"
   NATS_PASSWORD=$(random_key 36)
-  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "$NATS_PASSWORD" | tr -d '\r')
+  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "${NATS_PASSWORD}" | tr -d '\r')
 
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
-  readarray -t array < <(printf '%b\n' "$OUTPUT")
+  readarray -t array < <(printf '%b\n' "${OUTPUT}")
 
   NATS_CALLOUT_PUBLIC_KEY=${array[1]}
   NATS_CALLOUT_PRIVATE_KEY=${array[0]}
 
-  sed -i "s/_NATS_ACCOUNT_/$NATS_ACCOUNT/g" nats-server.conf
-  sed -i "s/_NATS_USER_/$NATS_USER/g" nats-server.conf
-  sed -i "s|_NATS_PASSWORD_CRYPT_|$NATS_PASSWORD_CRYPT|g" nats-server.conf
-  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/$NATS_CALLOUT_PUBLIC_KEY/g" nats-server.conf
-}
-
-configure_lets_encrypt() {
-  wget ${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg -O /etc/haproxy/haproxy.cfg
-  service haproxy start
-
-  if ! which snap >/dev/null; then
-    apt install -y snapd
-  fi
-
-  snap install core
-  snap refresh core
-  snap install --classic certbot
-  ln -s /snap/bin/certbot /usr/bin/certbot
-
-  if ! certbot certonly --standalone -d "${PLUG_N_MEET_SERVER_DOMAIN}" -d "${TURN_SERVER_DOMAIN}" \
-    --non-interactive --agree-tos --email "${EMAIL_ADDRESS}" \
-    --http-01-port=9080; then
-    display_error "Let's Encrypt SSL request did not succeed - exiting"
-  fi
-
-  service haproxy stop
-  rm /etc/haproxy/haproxy.cfg
+  sed -i "s/_NATS_ACCOUNT_/${NATS_ACCOUNT}/g" nats-server.conf
+  sed -i "s/_NATS_USER_/${NATS_USER}/g" nats-server.conf
+  sed -i "s|_NATS_PASSWORD_CRYPT_|${NATS_PASSWORD_CRYPT}|g" nats-server.conf
+  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/${NATS_CALLOUT_PUBLIC_KEY}/g" nats-server.conf
 }
 
 prepare_server() {
@@ -262,33 +262,33 @@ prepare_server() {
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
 
-  sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" docker-compose.yaml
+  sed -i "s/PUBLIC_IP/${PUBLIC_IP}/g" docker-compose.yaml
 
   # livekit
-  sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" livekit.yaml
-  sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" livekit.yaml
-  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" livekit.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" livekit.yaml
+  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" livekit.yaml
+  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" livekit.yaml
+  sed -i "s/TURN_SERVER_DOMAIN/${TURN_SERVER_DOMAIN}/g" livekit.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" livekit.yaml
 
   # ingress
-  sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" ingress.yaml
-  sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" ingress.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" ingress.yaml
+  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" ingress.yaml
+  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" ingress.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" ingress.yaml
 
   # nats
-  sed -i "s/NATS_ACCOUNT/$NATS_ACCOUNT/g" config.yaml
-  sed -i "s/NATS_USER/$NATS_USER/g" config.yaml
-  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" config.yaml
-  sed -i "s/NATS_CALLOUT_PRIVATE_KEY/$NATS_CALLOUT_PRIVATE_KEY/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
+  sed -i "s/NATS_ACCOUNT/${NATS_ACCOUNT}/g" config.yaml
+  sed -i "s/NATS_USER/${NATS_USER}/g" config.yaml
+  sed -i "s/NATS_PASSWORD/${NATS_PASSWORD}/g" config.yaml
+  sed -i "s/NATS_CALLOUT_PRIVATE_KEY/${NATS_CALLOUT_PRIVATE_KEY}/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
 
   # plugNmeet
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/$PLUG_N_MEET_SERVER_DOMAIN/g" config.yaml
-  sed -i "s/LIVEKIT_API_KEY/$LIVEKIT_API_KEY/g" config.yaml
-  sed -i "s/LIVEKIT_SECRET/$LIVEKIT_SECRET/g" config.yaml
-  sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" config.yaml
-  sed -i "s/DB_PLUGNMEET_PASSWORD/$DB_PLUGNMEET_PASSWORD/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
+  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" config.yaml
+  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" config.yaml
+  sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" config.yaml
+  sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" config.yaml
+  sed -i "s/DB_PLUGNMEET_PASSWORD/${DB_PLUGNMEET_PASSWORD}/g" config.yaml
 
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
@@ -296,11 +296,11 @@ prepare_server() {
 }
 
 install_client() {
-  wget $CLIENT_DOWNLOAD_URL -O client.zip
+  wget "${CLIENT_DOWNLOAD_URL}" -O client.zip
   unzip client.zip
   cp client/dist/assets/config_sample.js client/dist/assets/config.js
 
-  sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/$PLUG_N_MEET_SERVER_DOMAIN'\;/g" \
+  sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}'\;/g" \
     client/dist/assets/config.js
 
   rm client.zip
@@ -308,17 +308,17 @@ install_client() {
 
 prepare_etherpad() {
   mkdir -p etherpad
-  wget ${CONFIG_DOWNLOAD_URL}/settings.json -O etherpad/settings.json
+  wget "${CONFIG_DOWNLOAD_URL}/settings.json" -O etherpad/settings.json
 
   ETHERPAD_SECRET=$(random_key 40)
 
-  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" config.yaml
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\/etherpad/g" config.yaml
+  sed -i "s/ETHERPAD_SECRET/${ETHERPAD_SECRET}/g" config.yaml
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\/etherpad/g" config.yaml
 
-  sed -i "s/ETHERPAD_SECRET/$ETHERPAD_SECRET/g" etherpad/settings.json
+  sed -i "s/ETHERPAD_SECRET/${ETHERPAD_SECRET}/g" etherpad/settings.json
   # haproxy will remove path `/etherpad` during proxying
   # so, here we'll use the main domain name only
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/$PLUG_N_MEET_SERVER_DOMAIN/g" etherpad/settings.json
+  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}/g" etherpad/settings.json
 }
 
 install_fonts() {
@@ -342,52 +342,36 @@ install_fonts() {
     fontconfig
 }
 
-prepare_recorder() {
+install_recorder() {
   ## prepare chrome
   curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
-  ## prepare nodejs
-  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
-  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODEJS_VERSION.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+  ## install required software
+  apt -y update && apt -y install pulseaudio ffmpeg xvfb google-chrome-stable
 
-  ## install require software
-  apt -y update && apt -y install nodejs xvfb ffmpeg google-chrome-stable
-}
-
-install_recorder() {
-  wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder.service -O /etc/systemd/system/plugnmeet-recorder.service
-  wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@main.service -O /etc/systemd/system/plugnmeet-recorder@main.service
-  wget $CONFIG_DOWNLOAD_URL/plugnmeet-recorder@websocket.service -O /etc/systemd/system/plugnmeet-recorder@websocket.service
+  wget "${CONFIG_DOWNLOAD_URL}/plugnmeet-recorder.service" -O /etc/systemd/system/plugnmeet-recorder.service
   systemctl daemon-reload
   systemctl enable plugnmeet-recorder
-  systemctl enable plugnmeet-recorder@main
-  systemctl enable plugnmeet-recorder@websocket
 
-  wget $RECORDER_DOWNLOAD_URL -O recorder.zip
-  unzip recorder.zip
+  FILENAME="plugnmeet-recorder-linux-${ARCH}"
+  wget "${RECORDER_DOWNLOAD_URL}/${FILENAME}.zip" -O recorder.zip
+  unzip recorder.zip -d recorder && rm recorder.zip
   cp recorder/config_sample.yaml recorder/config.yaml
+  mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
 
-  WEBSOCKET_AUTH_TOKEN=$(random_key 10)
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/$PLUG_N_MEET_SERVER_DOMAIN\"/g" recorder/config.yaml
-  sed -i "s/PLUG_N_MEET_API_KEY/$PLUG_N_MEET_API_KEY/g" recorder/config.yaml
-  sed -i "s/PLUG_N_MEET_SECRET/$PLUG_N_MEET_SECRET/g" recorder/config.yaml
-  sed -i "s/WEBSOCKET_AUTH_TOKEN/$WEBSOCKET_AUTH_TOKEN/g" recorder/config.yaml
-  sed -i "s/NATS_USER/$NATS_USER/g" recorder/config.yaml
-  sed -i "s/NATS_PASSWORD/$NATS_PASSWORD/g" recorder/config.yaml
-
-  prepare_recorder
-
-  npm i -g pnpm
-  pnpm install --prod -C recorder
-  rm recorder.zip
+  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\"/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" recorder/config.yaml
+  sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" recorder/config.yaml
+  sed -i "s/NATS_USER/${NATS_USER}/g" recorder/config.yaml
+  sed -i "s/NATS_PASSWORD/${NATS_PASSWORD}/g" recorder/config.yaml
 }
 
 can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
   OS=$(lsb_release -si)
-  if (("$OS" != "Ubuntu" && "$OS" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
+  if (("${OS}" != "Ubuntu" && "${OS}" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
@@ -469,7 +453,7 @@ start_services() {
   ## finally restart all service
   systemctl restart plugnmeet
 
-  if [ "$RECORDER_INSTALL" == "y" ]; then
+  if [ "${RECORDER_INSTALL}" == "y" ]; then
     printf "\\nStarting recorder..\\n"
     # wait for plugnmeet
     while ! nc -z localhost 8080; do
