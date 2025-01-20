@@ -1,7 +1,7 @@
 [Unit]
 Description=plugNmeet recorder
 Requires=network-online.target
-After=network-online.target
+After=network-online.target remote-fs.target
 StartLimitIntervalSec=60
 StartLimitBurst=3
 

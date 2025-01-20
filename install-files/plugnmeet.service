@@ -1,7 +1,7 @@
 [Unit]
 Description=plugNmeet service
 Requires=docker.service
-After=docker.service
+After=docker.service remote-fs.target
 StartLimitIntervalSec=60
 StartLimitBurst=3
 
