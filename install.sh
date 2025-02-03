@@ -46,7 +46,7 @@ main() {
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
 
-  if ! which docker >/dev/null; then
+  if ! command -v docker >/dev/null; then
     install_docker
   fi
 
@@ -146,7 +146,7 @@ configure_lets_encrypt() {
   wget "${CONFIG_DOWNLOAD_URL}/haproxy_lets_encrypt.cfg" -O /etc/haproxy/haproxy.cfg
   service haproxy start
 
-  if ! which snap >/dev/null; then
+  if ! command -v snap >/dev/null; then
     apt install -y snapd
   fi
 
@@ -376,8 +376,8 @@ can_run() {
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
 
-  if ! which nc >/dev/null; then
-    apt install -y --no-install-recommends netcat-traditional
+  if ! command -v nc >/dev/null; then
+    apt install -y --no-install-recommends netcat
   fi
 
   ## make sure directory is exist
@@ -402,11 +402,11 @@ get_public_ip() {
 }
 
 enable_ufw() {
-  if ! which ufw >/dev/null; then
+  if ! command -v ufw >/dev/null; then
     apt install -y ufw
   fi
   ## install fail2ban server too
-  if ! which fail2ban-server >/dev/null; then
+  if ! command -v fail2ban-server >/dev/null; then
     apt-get install -y fail2ban
   fi
 
