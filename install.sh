@@ -233,20 +233,29 @@ install_mariadb() {
 prepare_nats() {
   wget ${CONFIG_DOWNLOAD_URL}/nats-server.conf -O ./nats-server.conf
   NATS_ACCOUNT="PNM"
-  NATS_USER="auth"
-  NATS_PASSWORD=$(random_key 36)
-  NATS_PASSWORD_CRYPT=$(docker run --rm -it bitnami/natscli:latest server passwd -p "${NATS_PASSWORD}" | tr -d '\r')
 
+  # for auth account
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
-  readarray -t array < <(printf '%b\n' "${OUTPUT}")
+  readarray -t account < <(printf '%b\n' "${OUTPUT}")
+  NATS_CALLOUT_PUBLIC_KEY=${account[1]}
+  NATS_CALLOUT_PRIVATE_KEY=${account[0]}
 
-  NATS_CALLOUT_PUBLIC_KEY=${array[1]}
-  NATS_CALLOUT_PRIVATE_KEY=${array[0]}
+  # for nkey user
+  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --user)
+  readarray -t user < <(printf '%b\n' "${OUTPUT}")
+  NATS_NKEY_PUBLIC_KEY=${user[1]}
+  NATS_NKEY_PRIVATE_KEY=${user[0]}
+
+  # for xkey
+  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --curve)
+  readarray -t curve < <(printf '%b\n' "${OUTPUT}")
+  NATS_XKEY_PUBLIC_KEY=${curve[1]}
+  NATS_XKEY_PRIVATE_KEY=${curve[0]}
 
   sed -i "s/_NATS_ACCOUNT_/${NATS_ACCOUNT}/g" nats-server.conf
-  sed -i "s/_NATS_USER_/${NATS_USER}/g" nats-server.conf
-  sed -i "s|_NATS_PASSWORD_CRYPT_|${NATS_PASSWORD_CRYPT}|g" nats-server.conf
+  sed -i "s/_NATS_NKEY_PUBLIC_KEY_/${NATS_NKEY_PUBLIC_KEY}/g" nats-server.conf
   sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/${NATS_CALLOUT_PUBLIC_KEY}/g" nats-server.conf
+  sed -i "s/_NATS_CALLOUT_XKEY_PUBLIC_KEY_/${NATS_XKEY_PUBLIC_KEY}/g" nats-server.conf
 }
 
 prepare_server() {
@@ -277,9 +286,9 @@ prepare_server() {
 
   # nats
   sed -i "s/NATS_ACCOUNT/${NATS_ACCOUNT}/g" config.yaml
-  sed -i "s/NATS_USER/${NATS_USER}/g" config.yaml
-  sed -i "s/NATS_PASSWORD/${NATS_PASSWORD}/g" config.yaml
+  sed -i "s/NATS_NKEY_PRIVATE_KEY/${NATS_NKEY_PRIVATE_KEY}/g" config.yaml
   sed -i "s/NATS_CALLOUT_PRIVATE_KEY/${NATS_CALLOUT_PRIVATE_KEY}/g" config.yaml
+  sed -i "s/NATS_CALLOUT_XKEY_PRIVATE_KEY/${NATS_XKEY_PRIVATE_KEY}/g" config.yaml
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
 
   # plugNmeet
@@ -363,8 +372,7 @@ install_recorder() {
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\"/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" recorder/config.yaml
-  sed -i "s/NATS_USER/${NATS_USER}/g" recorder/config.yaml
-  sed -i "s/NATS_PASSWORD/${NATS_PASSWORD}/g" recorder/config.yaml
+  sed -i "s/NATS_NKEY_PRIVATE_KEY/${NATS_NKEY_PRIVATE_KEY}/g" recorder/config.yaml
 }
 
 can_run() {

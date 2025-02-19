@@ -96,9 +96,9 @@ nats_info:
   nats_ws_urls:
     - "https://PLUG_N_MEET_SERVER_DOMAIN/ws"
   account: NATS_ACCOUNT
-  user: NATS_USER
-  password: NATS_PASSWORD
+  nkey: NATS_NKEY_PRIVATE_KEY
   auth_callout_issuer_private: NATS_CALLOUT_PRIVATE_KEY
+  auth_callout_xkey_private: NATS_CALLOUT_XKEY_PRIVATE_KEY
   num_replicas: 1 # 1,3,or 5
   subjects:
     system_api_worker: "sysApiWorker"
