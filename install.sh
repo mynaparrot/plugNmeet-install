@@ -372,7 +372,6 @@ install_recorder() {
   sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\"/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" recorder/config.yaml
   sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" recorder/config.yaml
-  sed -i "s/NATS_NKEY_PRIVATE_KEY/${NATS_NKEY_PRIVATE_KEY}/g" recorder/config.yaml
 }
 
 can_run() {
