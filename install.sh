@@ -237,20 +237,20 @@ prepare_nats() {
   # for auth account
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
   readarray -t account < <(printf '%b\n' "${OUTPUT}")
-  NATS_CALLOUT_PUBLIC_KEY=${account[1]}
-  NATS_CALLOUT_PRIVATE_KEY=${account[0]}
+  NATS_CALLOUT_PUBLIC_KEY=$(echo "${account[1]}" | tr -d '\r')
+  NATS_CALLOUT_PRIVATE_KEY=$(echo "${account[0]}" | tr -d '\r')
 
   # for nkey user
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --user)
   readarray -t user < <(printf '%b\n' "${OUTPUT}")
-  NATS_NKEY_PUBLIC_KEY=${user[1]}
-  NATS_NKEY_PRIVATE_KEY=${user[0]}
+  NATS_NKEY_PUBLIC_KEY=$(echo "${user[1]}" | tr -d '\r')
+  NATS_NKEY_PRIVATE_KEY=$(echo "${user[0]}" | tr -d '\r')
 
   # for xkey
   OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --curve)
   readarray -t curve < <(printf '%b\n' "${OUTPUT}")
-  NATS_XKEY_PUBLIC_KEY=${curve[1]}
-  NATS_XKEY_PRIVATE_KEY=${curve[0]}
+  NATS_XKEY_PUBLIC_KEY=$(echo "${curve[1]}" | tr -d '\r')
+  NATS_XKEY_PRIVATE_KEY=$(echo "${curve[0]}" | tr -d '\r')
 
   sed -i "s/_NATS_ACCOUNT_/${NATS_ACCOUNT}/g" nats-server.conf
   sed -i "s/_NATS_NKEY_PUBLIC_KEY_/${NATS_NKEY_PUBLIC_KEY}/g" nats-server.conf
