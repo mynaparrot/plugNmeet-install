@@ -384,7 +384,7 @@ can_run() {
   apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
 
   if ! command -v nc >/dev/null; then
-    apt install -y --no-install-recommends netcat
+    apt install -y --no-install-recommends netcat-openbsd
   fi
 
   ## make sure directory is exist
