@@ -200,7 +200,7 @@ install_mariadb() {
 	systemctl restart mariadb
 
 	# check if database is up
-  while ! nc -z localhost 3306; do
+  while ! netstat -tuln | grep ":3306 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -383,10 +383,6 @@ can_run() {
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
 
-  if ! command -v nc >/dev/null; then
-    apt install -y --no-install-recommends netcat-openbsd
-  fi
-
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
   clear
@@ -436,7 +432,7 @@ start_services() {
   printf "\\nStarting etherpad..\\n"
   docker compose up -d etherpad
   # we'll check etherpad because it take most of the time
-  while ! nc -z localhost 9001; do
+  while ! netstat -tuln | grep ":9001 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -446,13 +442,13 @@ start_services() {
   docker compose up -d livekit
   docker compose up -d plugnmeet
   # check if livekit is up
-  while ! nc -z localhost 7880; do
+  while ! netstat -tuln | grep ":7880 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
 
   # check if plugnmeet-api is up
-  while ! nc -z localhost 8080; do
+  while ! netstat -tuln | grep ":8080 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -463,7 +459,7 @@ start_services() {
   if [ "${RECORDER_INSTALL}" == "y" ]; then
     printf "\\nStarting recorder..\\n"
     # wait for plugnmeet
-    while ! nc -z localhost 8080; do
+    while ! netstat -tuln | grep ":8080 " > /dev/null; do
       printf "."
       sleep 1 # wait before check again
     done
