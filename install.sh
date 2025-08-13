@@ -2,6 +2,7 @@
 
 # Exit immediately if a command exits with a non-zero status.
 # Treat unset variables as an error when substituting.
+# The return value of a pipeline is the status of the last command to exit with a non-zero status.
 set -euo pipefail
 
 WORK_DIR=/opt/plugNmeet
@@ -97,14 +98,13 @@ install_docker() {
   apt -y install ca-certificates curl gnupg lsb-release
 
   if [ "$OS" == "Ubuntu" ]; then
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo \
       "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu ${CODE_NAME} stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
   elif [ "$OS" == "Debian" ]; then
-    curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker.gpg
     echo \
-      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-      ${CODE_NAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+      "deb [arch=${ARCH} signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/debian ${CODE_NAME} stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
   fi
 
   apt update
@@ -116,7 +116,7 @@ install_haproxy() {
     add-apt-repository ppa:vbernat/haproxy-3.0 -y
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
-      sudo gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
+      gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
       http://haproxy.debian.net "${CODE_NAME}"-backports-3.0 main \
       >/etc/apt/sources.list.d/haproxy.list
@@ -137,8 +137,8 @@ install_haproxy() {
   openssl dhparam -out /etc/haproxy/dhparams-2048.pem 2048
 
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
-  sed -i "s/TURN_SERVER_DOMAIN/$TURN_SERVER_DOMAIN/g" /etc/haproxy/haproxy.cfg
-  sed -i "s/MACHINE_IP/$MACHINE_IP/g" /etc/haproxy/haproxy.cfg
+  sed -i "s|TURN_SERVER_DOMAIN|${TURN_SERVER_DOMAIN}|g" /etc/haproxy/haproxy.cfg
+  sed -i "s|MACHINE_IP|${MACHINE_IP}|g" /etc/haproxy/haproxy.cfg
 
   wget "${CONFIG_DOWNLOAD_URL}/001-restart-haproxy" -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -170,8 +170,8 @@ configure_lets_encrypt() {
 }
 
 install_redis() {
-  curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg > /dev/null 2>&1
-  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${CODE_NAME} main" | sudo tee /etc/apt/sources.list.d/redis.list
+  curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg > /dev/null 2>&1
+  echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${CODE_NAME} main" | tee /etc/apt/sources.list.d/redis.list
 
   apt update && apt install -y redis
 
@@ -200,8 +200,8 @@ install_mariadb() {
   wget https://raw.githubusercontent.com/hestiacp/hestiacp/main/install/deb/mysql/my-small.cnf -O /etc/mysql/my.cnf
 
   update-rc.d mariadb defaults > /dev/null 2>&1
-	systemctl -q enable mariadb 2> /dev/null
-	systemctl restart mariadb
+  systemctl -q enable mariadb 2> /dev/null
+  systemctl restart mariadb
 
 	# check if database is up
   while ! netstat -tuln | grep ":3306 " > /dev/null; do
@@ -256,10 +256,10 @@ prepare_nats() {
   NATS_XKEY_PUBLIC_KEY=$(echo "${curve[1]}" | tr -d '\r')
   NATS_XKEY_PRIVATE_KEY=$(echo "${curve[0]}" | tr -d '\r')
 
-  sed -i "s/_NATS_ACCOUNT_/${NATS_ACCOUNT}/g" nats-server.conf
-  sed -i "s/_NATS_NKEY_PUBLIC_KEY_/${NATS_NKEY_PUBLIC_KEY}/g" nats-server.conf
-  sed -i "s/_NATS_CALLOUT_PUBLIC_KEY_/${NATS_CALLOUT_PUBLIC_KEY}/g" nats-server.conf
-  sed -i "s/_NATS_CALLOUT_XKEY_PUBLIC_KEY_/${NATS_XKEY_PUBLIC_KEY}/g" nats-server.conf
+  sed -i "s|_NATS_ACCOUNT_|${NATS_ACCOUNT}|g" nats-server.conf
+  sed -i "s|_NATS_NKEY_PUBLIC_KEY_|${NATS_NKEY_PUBLIC_KEY}|g" nats-server.conf
+  sed -i "s|_NATS_CALLOUT_PUBLIC_KEY_|${NATS_CALLOUT_PUBLIC_KEY}|g" nats-server.conf
+  sed -i "s|_NATS_CALLOUT_XKEY_PUBLIC_KEY_|${NATS_XKEY_PUBLIC_KEY}|g" nats-server.conf
 }
 
 prepare_server() {
@@ -275,33 +275,33 @@ prepare_server() {
   PLUG_N_MEET_API_KEY=API$(random_key 11)
   PLUG_N_MEET_SECRET=$(random_key 36)
 
-  sed -i "s/PUBLIC_IP/${PUBLIC_IP}/g" docker-compose.yaml
+  sed -i "s|PUBLIC_IP|${PUBLIC_IP}|g" docker-compose.yaml
 
   # livekit
-  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" livekit.yaml
-  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" livekit.yaml
-  sed -i "s/TURN_SERVER_DOMAIN/${TURN_SERVER_DOMAIN}/g" livekit.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" livekit.yaml
+  sed -i "s|LIVEKIT_API_KEY|${LIVEKIT_API_KEY}|g" livekit.yaml
+  sed -i "s|LIVEKIT_SECRET|${LIVEKIT_SECRET}|g" livekit.yaml
+  sed -i "s|TURN_SERVER_DOMAIN|${TURN_SERVER_DOMAIN}|g" livekit.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" livekit.yaml
 
   # ingress
-  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" ingress.yaml
-  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" ingress.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" ingress.yaml
+  sed -i "s|LIVEKIT_API_KEY|${LIVEKIT_API_KEY}|g" ingress.yaml
+  sed -i "s|LIVEKIT_SECRET|${LIVEKIT_SECRET}|g" ingress.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" ingress.yaml
 
   # nats
-  sed -i "s/NATS_ACCOUNT/${NATS_ACCOUNT}/g" config.yaml
-  sed -i "s/NATS_NKEY_PRIVATE_KEY/${NATS_NKEY_PRIVATE_KEY}/g" config.yaml
-  sed -i "s/NATS_CALLOUT_PRIVATE_KEY/${NATS_CALLOUT_PRIVATE_KEY}/g" config.yaml
-  sed -i "s/NATS_CALLOUT_XKEY_PRIVATE_KEY/${NATS_XKEY_PRIVATE_KEY}/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
+  sed -i "s|NATS_ACCOUNT|${NATS_ACCOUNT}|g" config.yaml
+  sed -i "s|NATS_NKEY_PRIVATE_KEY|${NATS_NKEY_PRIVATE_KEY}|g" config.yaml
+  sed -i "s|NATS_CALLOUT_PRIVATE_KEY|${NATS_CALLOUT_PRIVATE_KEY}|g" config.yaml
+  sed -i "s|NATS_CALLOUT_XKEY_PRIVATE_KEY|${NATS_CALLOUT_XKEY_PRIVATE_KEY}|g" config.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" config.yaml
 
   # plugNmeet
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/${PLUG_N_MEET_SERVER_DOMAIN}/g" config.yaml
-  sed -i "s/LIVEKIT_API_KEY/${LIVEKIT_API_KEY}/g" config.yaml
-  sed -i "s/LIVEKIT_SECRET/${LIVEKIT_SECRET}/g" config.yaml
-  sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" config.yaml
-  sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" config.yaml
-  sed -i "s/DB_PLUGNMEET_PASSWORD/${DB_PLUGNMEET_PASSWORD}/g" config.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" config.yaml
+  sed -i "s|LIVEKIT_API_KEY|${LIVEKIT_API_KEY}|g" config.yaml
+  sed -i "s|LIVEKIT_SECRET|${LIVEKIT_SECRET}|g" config.yaml
+  sed -i "s|PLUG_N_MEET_API_KEY|${PLUG_N_MEET_API_KEY}|g" config.yaml
+  sed -i "s|PLUG_N_MEET_SECRET|${PLUG_N_MEET_SECRET}|g" config.yaml
+  sed -i "s|DB_PLUGNMEET_PASSWORD|${DB_PLUGNMEET_PASSWORD}|g" config.yaml
 
   wget ${CONFIG_DOWNLOAD_URL}/plugnmeet.service -O /etc/systemd/system/plugnmeet.service
   systemctl daemon-reload
@@ -313,7 +313,7 @@ install_client() {
   unzip client.zip
   cp client/dist/assets/config_sample.js client/dist/assets/config.js
 
-  sed -i "s/window.PLUG_N_MEET_SERVER_URL.*/window.PLUG_N_MEET_SERVER_URL = 'https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}'\;/g" \
+  sed -i "s|window.PLUG_N_MEET_SERVER_URL.*|window.PLUG_N_MEET_SERVER_URL = 'https://${PLUG_N_MEET_SERVER_DOMAIN}';|g" \
     client/dist/assets/config.js
 
   rm client.zip
@@ -325,13 +325,13 @@ prepare_etherpad() {
 
   ETHERPAD_SECRET=$(random_key 40)
 
-  sed -i "s/ETHERPAD_SECRET/${ETHERPAD_SECRET}/g" config.yaml
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\/etherpad/g" config.yaml
+  sed -i "s|ETHERPAD_SECRET|${ETHERPAD_SECRET}|g" config.yaml
+  sed -i "s|ETHERPAD_SERVER_DOMAIN|https://${PLUG_N_MEET_SERVER_DOMAIN}/etherpad|g" config.yaml
 
-  sed -i "s/ETHERPAD_SECRET/${ETHERPAD_SECRET}/g" etherpad/settings.json
+  sed -i "s|ETHERPAD_SECRET|${ETHERPAD_SECRET}|g" etherpad/settings.json
   # haproxy will remove path `/etherpad` during proxying
   # so, here we'll use the main domain name only
-  sed -i "s/ETHERPAD_SERVER_DOMAIN/https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}/g" etherpad/settings.json
+  sed -i "s|ETHERPAD_SERVER_DOMAIN|https://${PLUG_N_MEET_SERVER_DOMAIN}|g" etherpad/settings.json
 }
 
 install_fonts() {
@@ -357,7 +357,7 @@ install_fonts() {
 
 install_recorder() {
   ## prepare chrome
-  curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
+  curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
   ## install required software
@@ -373,16 +373,16 @@ install_recorder() {
   mv -f recorder/config_sample.yaml recorder/config.yaml
   mv -f "recorder/${FILENAME}" recorder/plugnmeet-recorder
 
-  sed -i "s/PLUG_N_MEET_SERVER_DOMAIN/\"https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}\"/g" recorder/config.yaml
-  sed -i "s/PLUG_N_MEET_API_KEY/${PLUG_N_MEET_API_KEY}/g" recorder/config.yaml
-  sed -i "s/PLUG_N_MEET_SECRET/${PLUG_N_MEET_SECRET}/g" recorder/config.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|\"https://${PLUG_N_MEET_SERVER_DOMAIN}\"|g" recorder/config.yaml
+  sed -i "s|PLUG_N_MEET_API_KEY|${PLUG_N_MEET_API_KEY}|g" recorder/config.yaml
+  sed -i "s|PLUG_N_MEET_SECRET|${PLUG_N_MEET_SECRET}|g" recorder/config.yaml
 }
 
 can_run() {
   if [ $EUID != 0 ]; then display_error "You must run this script as root."; fi
 
   OS=$(lsb_release -si)
-  if (("${OS}" != "Ubuntu" && "${OS}" != "Debian")); then display_error "This script will require Ubuntu or Debian server."; fi
+  if [[ "${OS}" != "Ubuntu" && "${OS}" != "Debian" ]]; then display_error "This script will require Ubuntu or Debian server."; fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
   apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
@@ -402,10 +402,22 @@ display_error() {
 }
 
 get_public_ip() {
-  # best way to get ip using one of domain
-  # turn server's domain can't be behind proxy
+  # The TURN server domain must be configured in DNS to point to this server's public IP.
   PUBLIC_IP=$(dig +time=1 +tries=1 +retry=1 +short "${TURN_SERVER_DOMAIN}" "@resolver1.opendns.com")
-  MACHINE_IP=$(ip route get 8.8.8.8 | awk -F "src " 'NR==1{split($2,a," ");print a[1]}')
+
+  # Fallback to a public IP service if DNS resolution fails or hasn't propagated.
+  if [[ -z "${PUBLIC_IP}" ]]; then
+    echo "Warning: Could not resolve '${TURN_SERVER_DOMAIN}'. Falling back to public IP service." >&2
+    PUBLIC_IP=$(curl -s http://ipv4.icanhazip.com)
+  fi
+
+  # Final check to ensure we have an IP.
+  if [[ -z "${PUBLIC_IP}" ]]; then
+    display_error "Could not determine public IP address. Please check network connectivity and DNS for '${TURN_SERVER_DOMAIN}'."
+  fi
+
+  # to get the primary internal IP address.
+  MACHINE_IP=$(ip -4 route get 8.8.8.8 | awk '{print $7}')
 }
 
 enable_ufw() {
@@ -414,12 +426,13 @@ enable_ufw() {
   fi
   ## install fail2ban server too
   if ! command -v fail2ban-server >/dev/null; then
-    apt-get install -y fail2ban
+    apt install -y fail2ban
   fi
 
-  SSH_PORT=$(echo "${SSH_CLIENT}" | cut -d' ' -f 3)
-
-  ufw allow "${SSH_PORT}"/tcp
+  if [[ -n "${SSH_CLIENT-}" ]]; then
+    SSH_PORT=$(echo "${SSH_CLIENT}" | cut -d' ' -f 3)
+    ufw allow "${SSH_PORT}"/tcp
+  fi
   ufw allow 22/tcp # for safety
   ufw allow 80/tcp
   ufw allow 443/tcp
