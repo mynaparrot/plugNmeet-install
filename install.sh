@@ -17,7 +17,7 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
-MARIADB_VERSION="11.4"
+MARIADB_VERSION="11.8"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
@@ -113,12 +113,12 @@ install_docker() {
 
 install_haproxy() {
   if [ "$OS" == "Ubuntu" ]; then
-    add-apt-repository ppa:vbernat/haproxy-3.0 -y
+    add-apt-repository ppa:vbernat/haproxy-3.2 -y
   elif [ "$OS" == "Debian" ]; then
     curl -fsSL https://haproxy.debian.net/bernat.debian.org.gpg |
       gpg --dearmor -o /usr/share/keyrings/haproxy.debian.net.gpg
     echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-      http://haproxy.debian.net "${CODE_NAME}"-backports-3.0 main \
+      http://haproxy.debian.net "${CODE_NAME}"-backports-3.2 main \
       >/etc/apt/sources.list.d/haproxy.list
   fi
 
