@@ -51,10 +51,7 @@ main() {
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
 
-  if ! command -v docker >/dev/null; then
-    install_docker
-  fi
-
+  install_docker
   get_public_ip
   install_redis
   install_mariadb
@@ -95,6 +92,11 @@ main() {
 }
 
 install_docker() {
+  if command -v docker >/dev/null; then
+    echo "Docker is already installed, skipping installation."
+    return
+  fi
+
   apt -y install ca-certificates curl gnupg lsb-release
 
   if [ "$OS" == "Ubuntu" ]; then
@@ -170,6 +172,11 @@ configure_lets_encrypt() {
 }
 
 install_redis() {
+  if [ "$(dpkg-query -W -f='${Status}' redis-server 2>/dev/null | grep -c "ok installed")" -ne 0 ]; then
+    echo "Redis is already installed, skipping installation."
+    return
+  fi
+
   curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg > /dev/null 2>&1
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb ${CODE_NAME} main" | tee /etc/apt/sources.list.d/redis.list
 
@@ -180,6 +187,31 @@ install_redis() {
 }
 
 install_mariadb() {
+  if [ "$(dpkg-query -W -f='${Status}' mariadb-server 2>/dev/null | grep -c "ok installed")" -ne 0 ] || \
+     [ "$(dpkg-query -W -f='${Status}' mysql-server 2>/dev/null | grep -c "ok installed")" -ne 0 ]; then
+    echo "A MySQL/MariaDB server is already installed. Attempting to configure the database and user."
+
+    DB_CMD="mariadb"
+    if ! command -v mariadb >/dev/null; then
+      DB_CMD="mysql"
+    fi
+
+    wget ${SQL_DUMP_DOWNLOAD_URL} -O install.sql
+    if ! ${DB_CMD} -u root <install.sql; then
+      rm install.sql
+      display_error "Failed to import database schema into the existing database server."
+    fi
+    rm install.sql
+
+    DB_PLUGNMEET_PASSWORD=$(random_key 36)
+    if ! ${DB_CMD} -u root -e "CREATE USER 'plugnmeet'@'localhost' IDENTIFIED BY '${DB_PLUGNMEET_PASSWORD}';GRANT ALL ON plugnmeet.* TO 'plugnmeet'@'localhost';FLUSH PRIVILEGES;"; then
+      display_error "Failed to create 'plugnmeet' user in the existing database server. Please check your root user permissions."
+    fi
+    echo "Database and user configured successfully in the existing database server."
+    return
+  fi
+
+  echo "Installing MariaDB..."
   version="ubuntu"
   if [ "$OS" == "Debian" ]; then
     version="debian"
@@ -384,8 +416,18 @@ can_run() {
   OS=$(lsb_release -si)
   if [[ "${OS}" != "Ubuntu" && "${OS}" != "Debian" ]]; then display_error "This script will require Ubuntu or Debian server."; fi
 
+  if [ "$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")" -ne 0 ]; then
+    display_error "This installation script requires a clean server to avoid port conflicts. Found Apache installed. Please use a clean server or remove Apache before proceeding."
+  fi
+  if [ "$(dpkg-query -W -f='${Status}' nginx 2>/dev/null | grep -c "ok installed")" -ne 0 ]; then
+    display_error "This installation script requires a clean server to avoid port conflicts. Found Nginx installed. Please use a clean server or remove Nginx before proceeding."
+  fi
+  if [ "$(dpkg-query -W -f='${Status}' haproxy 2>/dev/null | grep -c "ok installed")" -ne 0 ]; then
+    display_error "This installation script configures its own HAProxy instance and requires a clean setup. Found an existing HAProxy installation. Please use a clean server or remove HAProxy before proceeding."
+  fi
+
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils
+  apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils curl
 
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
