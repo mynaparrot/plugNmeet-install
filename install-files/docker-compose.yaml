@@ -63,7 +63,6 @@ services:
       - /etc/fonts/:/etc/fonts/:ro
       - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
       - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
-    command: --config "/app/config.yaml"
     depends_on:
       nats:
         condition: service_started

@@ -347,7 +347,7 @@ install_client() {
 
   # TODO: change to new pattern
   # sed -i "s/serverUrl:.*/serverUrl: 'https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}'\,/g" dist/assets/config.js
-  sed -i "s|window.PLUG_N_MEET_SERVER_URL.*|window.PLUG_N_MEET_SERVER_URL = 'https://${PLUG_N_MEET_SERVER_DOMAIN}';|g" \
+  sed -i "s|serverUrl.*|serverUrl: 'https://${PLUG_N_MEET_SERVER_DOMAIN}',|g" \
     client/dist/assets/config.js
 
   rm client.zip
