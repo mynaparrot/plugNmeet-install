@@ -298,6 +298,7 @@ prepare_server() {
   wget ${CONFIG_DOWNLOAD_URL}/config.yaml -O config.yaml
   wget ${CONFIG_DOWNLOAD_URL}/livekit.yaml -O livekit.yaml
   wget ${CONFIG_DOWNLOAD_URL}/ingress.yaml -O ingress.yaml
+  wget ${CONFIG_DOWNLOAD_URL}/sip.yaml -O sip.yaml
   wget ${CONFIG_DOWNLOAD_URL}/docker-compose.yaml -O docker-compose.yaml
 
   ## change livekit api & turn
@@ -319,6 +320,11 @@ prepare_server() {
   sed -i "s|LIVEKIT_API_KEY|${LIVEKIT_API_KEY}|g" ingress.yaml
   sed -i "s|LIVEKIT_SECRET|${LIVEKIT_SECRET}|g" ingress.yaml
   sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" ingress.yaml
+
+  # sip
+  sed -i "s|LIVEKIT_API_KEY|${LIVEKIT_API_KEY}|g" sip.yaml
+  sed -i "s|LIVEKIT_SECRET|${LIVEKIT_SECRET}|g" sip.yaml
+  sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|${PLUG_N_MEET_SERVER_DOMAIN}|g" sip.yaml
 
   # nats
   sed -i "s|NATS_ACCOUNT|${NATS_ACCOUNT}|g" config.yaml
@@ -484,6 +490,10 @@ enable_ufw() {
   ufw allow 1935/tcp # for ingres RTMP
   ufw allow 443/udp
   ufw allow 50000:60000/udp
+  # for SIP
+  ufw allow 5060:5061/tcp
+  ufw allow 5060:5061/udp
+  ufw allow 10000:20000/udp
 
   ufw --force enable
 }
