@@ -64,6 +64,22 @@ livekit_info:
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
 
+livekit_sip_info:
+  enabled: false
+  # unique tunk name for plugNmeet SIP calls
+  trunk_name: "pnm-inbound-trunk"
+  # List of allowed inbound phone numbers.
+  phone_numbers: ["+12674777275","+441883778715"]
+#  allowed_ip_addresses: []
+#  auth_username: "auth"
+#  auth_password: "password"
+#  # Media encryption (SRTP) policy for SIP calls.
+#  # 0 = Disabled: No encryption.
+#  # 1 = Allowed: Encrypt if supported, otherwise fallback to unencrypted.
+#  # 2 = Required: Encrypt always, reject call if not supported.
+#  # Default: 0
+#  media_encryption: 0
+
 redis_info:
   host: localhost:6379
   username: ""
@@ -144,20 +160,7 @@ upload_file_settings:
   max_size_whiteboard_file: 30
   # If true, uploaded files will not be deleted after the session ends.
   keep_forever: false
-  allowed_types:
-    - "jpg"
-    - "png"
-    - "jpeg"
-    - "svg"
-    - "pdf"
-    - "docx"
-    - "txt"
-    - "xlsx"
-    - "pptx"
-    - "zip"
-    - "mp4"
-    - "webm"
-    - "mp3"
+  allowed_types: ["jpg","png","jpeg","svg","pdf","docx","txt","xlsx","pptx","zip","mp4","webm","mp3"]
 
 recorder_info:
   # This path must match the recorder's copy_to_dir setting.
