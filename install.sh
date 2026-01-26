@@ -236,7 +236,7 @@ install_mariadb() {
   systemctl restart mariadb
 
 	# check if database is up
-  while ! netstat -tuln | grep ":3306 " > /dev/null; do
+  while ! ss -tuln | grep ":3306 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -351,8 +351,6 @@ install_client() {
   unzip client.zip
   cp client/dist/assets/config_sample.js client/dist/assets/config.js
 
-  # TODO: change to new pattern
-  # sed -i "s/serverUrl:.*/serverUrl: 'https:\/\/${PLUG_N_MEET_SERVER_DOMAIN}'\,/g" dist/assets/config.js
   sed -i "s|serverUrl.*|serverUrl: 'https://${PLUG_N_MEET_SERVER_DOMAIN}',|g" \
     client/dist/assets/config.js
 
@@ -376,7 +374,6 @@ prepare_etherpad() {
 
 install_fonts() {
   apt update && apt -y install --no-install-recommends \
-    fonts-arkpandora \
     fonts-crosextra-carlito \
     fonts-crosextra-caladea \
     fonts-noto \
@@ -435,7 +432,11 @@ can_run() {
   fi
 
   apt update && apt upgrade -y && apt dist-upgrade -y
-  apt install -y --no-install-recommends software-properties-common unzip net-tools git dnsutils curl
+  local base_packages="unzip git bind9-dnsutils curl"
+  if [ "$OS" == "Ubuntu" ]; then
+    base_packages+=" software-properties-common"
+  fi
+  apt install -y --no-install-recommends ${base_packages}
 
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
@@ -443,7 +444,7 @@ can_run() {
 }
 
 random_key() {
-  tr -dc A-Za-z0-9 </dev/urandom | dd bs="$1" count=1 2>/dev/null
+  tr -dc A-Za-z0-9 </dev/urandom | head -c "$1"
 }
 
 display_error() {
@@ -503,7 +504,7 @@ start_services() {
   printf "\\nStarting etherpad..\\n"
   docker compose up -d etherpad
   # we'll check etherpad because it take most of the time
-  while ! netstat -tuln | grep ":9001 " > /dev/null; do
+  while ! ss -tuln | grep ":9001 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -513,13 +514,13 @@ start_services() {
   docker compose up -d livekit
   docker compose up -d plugnmeet
   # check if livekit is up
-  while ! netstat -tuln | grep ":7880 " > /dev/null; do
+  while ! ss -tuln | grep ":7880 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
 
   # check if plugnmeet-api is up
-  while ! netstat -tuln | grep ":8080 " > /dev/null; do
+  while ! ss -tuln | grep ":8080 " > /dev/null; do
     printf "."
     sleep 1 # wait before check again
   done
@@ -530,7 +531,7 @@ start_services() {
   if [ "${RECORDER_INSTALL}" == "y" ]; then
     printf "\\nStarting recorder..\\n"
     # wait for plugnmeet
-    while ! netstat -tuln | grep ":8080 " > /dev/null; do
+    while ! ss -tuln | grep ":8080 " > /dev/null; do
       printf "."
       sleep 1 # wait before check again
     done
