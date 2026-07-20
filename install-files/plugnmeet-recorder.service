@@ -1,9 +1,14 @@
 [Unit]
 Description=plugNmeet recorder
 Requires=network-online.target
-After=network-online.target remote-fs.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
+# docker.service ordering: on all-in-one installs NATS runs in Docker and is not
+# ready when network-online.target is reached; this is a no-op on recorder-only
+# machines without Docker.
+After=network-online.target remote-fs.target docker.service
+# Never stop retrying: at boot the recorder can fail repeatedly while NATS is
+# still starting. With a start limit, systemd gives up permanently and the
+# recorder stays dead until someone restarts it by hand.
+StartLimitIntervalSec=0
 
 [Service]
 WorkingDirectory=/opt/plugNmeet/recorder
