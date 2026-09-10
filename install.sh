@@ -59,7 +59,6 @@ main() {
   install_haproxy
   prepare_server
   install_client
-  prepare_etherpad
   install_fonts
 
   if [ "${RECORDER_INSTALL}" == "y" ]; then
@@ -357,21 +356,6 @@ install_client() {
   rm client.zip
 }
 
-prepare_etherpad() {
-  mkdir -p etherpad
-  wget "${CONFIG_DOWNLOAD_URL}/settings.json" -O etherpad/settings.json
-
-  ETHERPAD_SECRET=$(random_key 40)
-
-  sed -i "s|ETHERPAD_SECRET|${ETHERPAD_SECRET}|g" config.yaml
-  sed -i "s|ETHERPAD_SERVER_DOMAIN|https://${PLUG_N_MEET_SERVER_DOMAIN}/etherpad|g" config.yaml
-
-  sed -i "s|ETHERPAD_SECRET|${ETHERPAD_SECRET}|g" etherpad/settings.json
-  # haproxy will remove path `/etherpad` during proxying
-  # so, here we'll use the main domain name only
-  sed -i "s|ETHERPAD_SERVER_DOMAIN|https://${PLUG_N_MEET_SERVER_DOMAIN}|g" etherpad/settings.json
-}
-
 install_fonts() {
   apt update && apt -y install --no-install-recommends \
     fonts-crosextra-carlito \
@@ -500,15 +484,6 @@ enable_ufw() {
 }
 
 start_services() {
-  # start etherpad
-  printf "\\nStarting etherpad..\\n"
-  docker compose up -d etherpad
-  # we'll check etherpad because it take most of the time
-  while ! ss -tuln | grep ":9001 " > /dev/null; do
-    printf "."
-    sleep 1 # wait before check again
-  done
-
   # now start livekit & plugnmeet-api
   printf "\\nStarting livekit & plugNmeet..\\n"
   docker compose up -d livekit

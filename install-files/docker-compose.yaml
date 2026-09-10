@@ -12,6 +12,7 @@ services:
       interval: 20s
       timeout: 1s
       retries: 5
+
   livekit-ingress:
     image: livekit/ingress
     restart: always
@@ -27,6 +28,7 @@ services:
       interval: 20s
       timeout: 1s
       retries: 5
+
   livekit-sip:
     image: livekit/sip
     restart: always
@@ -42,6 +44,7 @@ services:
       interval: 20s
       timeout: 1s
       retries: 5
+
   nats:
     image: nats:2.14-alpine
     restart: always
@@ -52,21 +55,7 @@ services:
     volumes:
       - ./nats-server.conf:/nats-server.conf
       - ./nats-data:/data/jetstream
-  etherpad:
-    image: mynaparrot/plugnmeet-etherpad
-    restart: always
-    network_mode: "host"
-    volumes:
-      - ./etherpad/settings.json:/opt/etherpad-lite/settings.json
-      - /usr/share/fonts/:/usr/share/fonts/:ro
-      - /etc/fonts/:/etc/fonts/:ro
-      - /usr/share/fontconfig/:/usr/share/fontconfig/:ro
-      - /var/cache/fontconfig/:/var/cache/fontconfig/:ro
-    healthcheck:
-      test: wget --no-verbose --tries=5 --spider "http://127.0.0.1:9001/api" || exit 1
-      interval: 20s
-      timeout: 1s
-      retries: 5
+
   plugnmeet:
     image: mynaparrot/plugnmeet-server
     restart: always
