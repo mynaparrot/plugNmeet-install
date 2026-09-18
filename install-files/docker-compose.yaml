@@ -46,7 +46,7 @@ services:
       retries: 5
 
   nats:
-    image: nats:2.14-alpine
+    image: nats:2.15-alpine
     restart: always
     network_mode: "host"
     command:
