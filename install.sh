@@ -17,7 +17,7 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 ## https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
-MARIADB_VERSION="11.8"
+MARIADB_VERSION="12.3"
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
