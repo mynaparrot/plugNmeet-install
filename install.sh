@@ -139,7 +139,6 @@ install_haproxy() {
 
   wget ${CONFIG_DOWNLOAD_URL}/haproxy_main.cfg -O /etc/haproxy/haproxy.cfg
   sed -i "s|TURN_SERVER_DOMAIN|${TURN_SERVER_DOMAIN}|g" /etc/haproxy/haproxy.cfg
-  sed -i "s|MACHINE_IP|${MACHINE_IP}|g" /etc/haproxy/haproxy.cfg
 
   wget "${CONFIG_DOWNLOAD_URL}/001-restart-haproxy" -O /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
   chmod +x /etc/letsencrypt/renewal-hooks/post/001-restart-haproxy
@@ -450,9 +449,6 @@ get_public_ip() {
   if [[ -z "${PUBLIC_IP}" ]]; then
     display_error "Could not determine public IP address. Please check network connectivity and DNS for '${TURN_SERVER_DOMAIN}'."
   fi
-
-  # to get the primary internal IP address.
-  MACHINE_IP=$(ip -4 route get 8.8.8.8 | awk '{print $7}')
 }
 
 enable_ufw() {
