@@ -536,7 +536,7 @@ install_recorder() {
   sed -i "s|PLUG_N_MEET_SECRET|${PLUG_N_MEET_SECRET}|g" recorder/config.yaml
 }
 
-## static ffmpeg with whip muxer support, same build as c-recorder/docker-build/Dockerfile.base but installed to /usr/bin (this script requires a clean OS)
+## static ffmpeg with whip muxer support
 install_ffmpeg() {
   case "${ARCH}" in
     amd64) FFMPEG_ARCH="linux64" ;;
