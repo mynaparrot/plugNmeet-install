@@ -18,35 +18,53 @@ RECORDER_DOWNLOAD_URL="https://github.com/mynaparrot/plugNmeet-recorder/releases
 SQL_DUMP_DOWNLOAD_URL="https://raw.githubusercontent.com/mynaparrot/plugNmeet-server/main/sql_dump/install.sql"
 
 MARIADB_VERSION="12.3"
+
+## https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-linux64-gpl-9.0.tar.xz
+FFMPEG_VERSION="9.0"
+
 OS=$(lsb_release -si)
 CODE_NAME=$(lsb_release -cs)
 ARCH=$(dpkg --print-architecture)
 
 main() {
+  parse_args "$@"
+
+  if [[ -z "${PLUG_N_MEET_SERVER_DOMAIN}" ]]; then
+    ensure_tty "plugNmeet server domain" "--domain <domain>"
+    while [[ $PLUG_N_MEET_SERVER_DOMAIN == "" ]]; do
+      echo -n "Please enter plugNmeet server domain (example: plugnmeet.example.com): "
+      read -r PLUG_N_MEET_SERVER_DOMAIN
+    done
+  fi
+
+  if [[ -z "${TURN_SERVER_DOMAIN}" ]]; then
+    ensure_tty "turn server domain" "--turn-domain <domain>"
+    while [[ $TURN_SERVER_DOMAIN == "" ]]; do
+      echo -n "Please enter turn server domain (example: turn.example.com): "
+      read -r TURN_SERVER_DOMAIN
+    done
+  fi
+
+  if [[ -z "${EMAIL_ADDRESS}" ]]; then
+    ensure_tty "email address" "--email <email>"
+    while [[ $EMAIL_ADDRESS == "" ]]; do
+      echo -n "Please enter valid email address: "
+      read -r EMAIL_ADDRESS
+    done
+  fi
+
+  if [[ -z "${RECORDER_INSTALL}" ]]; then
+    ensure_tty "recorder choice" "--recorder <yes|no>"
+    echo -n "Do you want to install recorder? y/n: "
+    read -r RECORDER_INSTALL
+  fi
+  if [[ -z "${CONFIGURE_UFW}" ]]; then
+    ensure_tty "ufw choice" "--ufw <yes|no>"
+    echo -n "Do you want to configure firewall(ufw)? y/n: "
+    read -r CONFIGURE_UFW
+  fi
+
   can_run
-
-  PLUG_N_MEET_SERVER_DOMAIN=
-  while [[ $PLUG_N_MEET_SERVER_DOMAIN == "" ]]; do
-    echo -n "Please enter plugNmeet server domain (example: plugnmeet.example.com): "
-    read -r PLUG_N_MEET_SERVER_DOMAIN
-  done
-
-  TURN_SERVER_DOMAIN=
-  while [[ $TURN_SERVER_DOMAIN == "" ]]; do
-    echo -n "Please enter turn server domain (example: turn.example.com): "
-    read -r TURN_SERVER_DOMAIN
-  done
-
-  EMAIL_ADDRESS=
-  while [[ $EMAIL_ADDRESS == "" ]]; do
-    echo -n "Please enter valid email address: "
-    read -r EMAIL_ADDRESS
-  done
-
-  echo -n "Do you want to install recorder? y/n: "
-  read -r RECORDER_INSTALL
-  echo -n "Do you want to configure firewall(ufw)? y/n: "
-  read -r CONFIGURE_UFW
 
   mkdir -p ${WORK_DIR}
   cd ${WORK_DIR}
@@ -72,7 +90,9 @@ main() {
   printf "\\nFinalizing setup..\\n"
   start_services
 
-  clear
+  if [[ -t 1 ]]; then
+    clear
+  fi
   printf "Installation completed!\\n\\n"
   printf "plugNmeet server URL: %s\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}"
   printf "plugNmeet API KEY: %s\\n" "${PLUG_N_MEET_API_KEY}"
@@ -88,6 +108,123 @@ main() {
 
   printf "To test frontend: \\n"
   printf "%s\\n\\n" "https://${PLUG_N_MEET_SERVER_DOMAIN}/login.html"
+}
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [options]
+  -d, --domain <domain>        plugNmeet server domain (example: plugnmeet.example.com)
+  -t, --turn-domain <domain>   turn server domain (example: turn.example.com)
+  -e, --email <email>          email address for Let's Encrypt
+  -r, --recorder <yes|no>      install the recorder (default: prompt)
+  -f, --ufw <yes|no>           configure ufw firewall (default: prompt)
+  -h, --help                   show this help
+
+Example (non-interactive, e.g. cloud post-install script):
+  bash install.sh --domain pnm.example.com --turn-domain turn.example.com --email admin@example.com --recorder yes --ufw yes
+EOF
+}
+
+parse_args() {
+  PLUG_N_MEET_SERVER_DOMAIN="${PLUG_N_MEET_SERVER_DOMAIN:-}"
+  TURN_SERVER_DOMAIN="${TURN_SERVER_DOMAIN:-}"
+  EMAIL_ADDRESS="${EMAIL_ADDRESS:-}"
+  RECORDER_INSTALL="${RECORDER_INSTALL:-}"
+  CONFIGURE_UFW="${CONFIGURE_UFW:-}"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -d|--domain)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          display_error "option $1 requires a value (see --help)"
+        fi
+        PLUG_N_MEET_SERVER_DOMAIN="$2"
+        shift 2
+        ;;
+      --domain=*)
+        PLUG_N_MEET_SERVER_DOMAIN="${1#*=}"
+        shift
+        ;;
+      -t|--turn-domain)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          display_error "option $1 requires a value (see --help)"
+        fi
+        TURN_SERVER_DOMAIN="$2"
+        shift 2
+        ;;
+      --turn-domain=*)
+        TURN_SERVER_DOMAIN="${1#*=}"
+        shift
+        ;;
+      -e|--email)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          display_error "option $1 requires a value (see --help)"
+        fi
+        EMAIL_ADDRESS="$2"
+        shift 2
+        ;;
+      --email=*)
+        EMAIL_ADDRESS="${1#*=}"
+        shift
+        ;;
+      -r|--recorder)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          display_error "option $1 requires a value (see --help)"
+        fi
+        case "${2,,}" in
+          y|yes) RECORDER_INSTALL="y" ;;
+          n|no) RECORDER_INSTALL="n" ;;
+          *) display_error "invalid value '$2' for $1 (expected: yes or no)" ;;
+        esac
+        shift 2
+        ;;
+      --recorder=*)
+        local value
+        value="${1#*=}"
+        case "${value,,}" in
+          y|yes) RECORDER_INSTALL="y" ;;
+          n|no) RECORDER_INSTALL="n" ;;
+          *) display_error "invalid value '${value}' for ${1%%=*} (expected: yes or no)" ;;
+        esac
+        shift
+        ;;
+      -f|--ufw)
+        if [[ $# -lt 2 || -z "${2:-}" ]]; then
+          display_error "option $1 requires a value (see --help)"
+        fi
+        case "${2,,}" in
+          y|yes) CONFIGURE_UFW="y" ;;
+          n|no) CONFIGURE_UFW="n" ;;
+          *) display_error "invalid value '$2' for $1 (expected: yes or no)" ;;
+        esac
+        shift 2
+        ;;
+      --ufw=*)
+        local value
+        value="${1#*=}"
+        case "${value,,}" in
+          y|yes) CONFIGURE_UFW="y" ;;
+          n|no) CONFIGURE_UFW="n" ;;
+          *) display_error "invalid value '${value}' for ${1%%=*} (expected: yes or no)" ;;
+        esac
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        display_error "unknown argument: $1 (see --help)"
+        ;;
+    esac
+  done
+}
+
+ensure_tty() {
+  # $1: what is missing, $2: the argument that provides it
+  if [[ ! -t 0 ]]; then
+    display_error "missing required value: $1. No terminal available for a prompt; pass it as an argument ($2)."
+  fi
 }
 
 install_docker() {
@@ -269,19 +406,19 @@ prepare_nats() {
   NATS_ACCOUNT="PNM"
 
   # for auth account
-  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --account)
+  OUTPUT=$(docker run --rm -i natsio/nats-box:latest nsc generate nkey --account)
   readarray -t account < <(printf '%b\n' "${OUTPUT}")
   NATS_CALLOUT_PUBLIC_KEY=$(echo "${account[1]}" | tr -d '\r')
   NATS_CALLOUT_PRIVATE_KEY=$(echo "${account[0]}" | tr -d '\r')
 
   # for nkey user
-  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --user)
+  OUTPUT=$(docker run --rm -i natsio/nats-box:latest nsc generate nkey --user)
   readarray -t user < <(printf '%b\n' "${OUTPUT}")
   NATS_NKEY_PUBLIC_KEY=$(echo "${user[1]}" | tr -d '\r')
   NATS_NKEY_PRIVATE_KEY=$(echo "${user[0]}" | tr -d '\r')
 
   # for xkey
-  OUTPUT=$(docker run --rm -it natsio/nats-box:latest nsc generate nkey --curve)
+  OUTPUT=$(docker run --rm -i natsio/nats-box:latest nsc generate nkey --curve)
   readarray -t curve < <(printf '%b\n' "${OUTPUT}")
   NATS_XKEY_PUBLIC_KEY=$(echo "${curve[1]}" | tr -d '\r')
   NATS_XKEY_PRIVATE_KEY=$(echo "${curve[0]}" | tr -d '\r')
@@ -381,7 +518,8 @@ install_recorder() {
   echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >/etc/apt/sources.list.d/google-chrome.list
 
   ## install required software
-  apt -y update && apt -y install pulseaudio ffmpeg xvfb google-chrome-stable
+  apt -y update && apt -y install pulseaudio xvfb google-chrome-stable xz-utils ca-certificates
+  install_ffmpeg
 
   wget "${CONFIG_DOWNLOAD_URL}/plugnmeet-recorder.service" -O /etc/systemd/system/plugnmeet-recorder.service
   systemctl daemon-reload
@@ -396,6 +534,24 @@ install_recorder() {
   sed -i "s|PLUG_N_MEET_SERVER_DOMAIN|\"https://${PLUG_N_MEET_SERVER_DOMAIN}\"|g" recorder/config.yaml
   sed -i "s|PLUG_N_MEET_API_KEY|${PLUG_N_MEET_API_KEY}|g" recorder/config.yaml
   sed -i "s|PLUG_N_MEET_SECRET|${PLUG_N_MEET_SECRET}|g" recorder/config.yaml
+}
+
+## static ffmpeg with whip muxer support, same build as c-recorder/docker-build/Dockerfile.base but installed to /usr/bin (this script requires a clean OS)
+install_ffmpeg() {
+  case "${ARCH}" in
+    amd64) FFMPEG_ARCH="linux64" ;;
+    arm64) FFMPEG_ARCH="linuxarm64" ;;
+    *) display_error "unsupported architecture '${ARCH}' for ffmpeg (expected amd64 or arm64)" ;;
+  esac
+
+  FFMPEG_TARBALL="ffmpeg-n${FFMPEG_VERSION}-latest-${FFMPEG_ARCH}-gpl-${FFMPEG_VERSION}.tar.xz"
+  curl -fsSL -o "/tmp/${FFMPEG_TARBALL}" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG_TARBALL}"
+  mkdir /tmp/ffmpeg-build
+  tar -xJf "/tmp/${FFMPEG_TARBALL}" -C /tmp/ffmpeg-build
+  mv -f /tmp/ffmpeg-build/*/bin/ff* /usr/bin/
+  chmod +x /usr/bin/ff*
+  rm -rf "/tmp/${FFMPEG_TARBALL}" /tmp/ffmpeg-build
+  ffmpeg -version
 }
 
 can_run() {
@@ -423,7 +579,9 @@ can_run() {
 
   ## make sure directory is exist
   mkdir -p /usr/share/keyrings
-  clear
+  if [[ -t 1 ]]; then
+    clear
+  fi
 }
 
 random_key() {
