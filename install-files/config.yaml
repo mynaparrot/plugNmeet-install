@@ -88,6 +88,8 @@ log_settings:
 
 livekit_info:
   host: "https://PLUG_N_MEET_SERVER_DOMAIN/livekit"
+  # Optional client-facing URL; falls back to host when unset.
+  #client_host: "https://livekit.example.com"
   api_key: LIVEKIT_API_KEY
   secret: LIVEKIT_SECRET
 
